@@ -1,0 +1,31 @@
+# Directory trees to ignore
+/backups/
+/build/
+/*/build/
+/*/out/
+/build-logic/*/build/
+/build-logic/*/out/
+
+# Ignore Gradle project-specific cache directory
+.gradle
+
+# macOS
+.DS_Store
+
+# specific files to ignore
+*.log
+
+# IDEA
+/out/
+.idea/
+*.iml
+
+# Eclipse
+.project
+.settings
+.classpath
+
+# virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
+/hs_err_pid*
+# other jvm related files
+/.attach_*
