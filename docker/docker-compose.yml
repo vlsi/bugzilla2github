@@ -1,0 +1,13 @@
+version: "3"
+services:
+  bzdb:
+    image: mysql:${MSV:-8.0.30}
+    ports:
+      - 3306:3306
+    security_opt:
+      - seccomp:unconfined
+    volumes:
+      - ./dumps/jmeter_bzdump.sql:/docker-entrypoint-initdb.d/jmeter_bzdump.sql
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:-root}
+      - MYSQL_DATABASE=${MYSQL_DATABASE:-bugzilla}
