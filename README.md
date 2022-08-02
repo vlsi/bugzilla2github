@@ -1,3 +1,5 @@
+[![GitHub CI](https://github.com/pgjdbc/pgjdbc/actions/workflows/main.yml/badge.svg?branch=master)](https://github.com/pgjdbc/pgjdbc/actions/workflows/main.yml)
+
 About
 =====
 
