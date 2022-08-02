@@ -40,6 +40,11 @@ The following command would export attachments from Bugzilla and store them into
 
     $ ./gradlew :bugzilla-backend:run --args="export-attachments --data-folder=build/attachments"
 
+Sample results
+--------------
+
+* https://github.com/vlsi/tmp-jmeter-issues/issues
+
 License
 -------
 Apache License 2.0
