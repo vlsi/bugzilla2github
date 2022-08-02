@@ -31,9 +31,14 @@ Known limitations
 Sample usage
 ------------
 
-The following command would fetch ten bugs from Bugzilla and store them into `build/data` folder.
+The following command would display command line help:
 
-    $ ./gradlew :bugzilla-export:run --args="fetch-bugs --limit=10 --login=test --host=https://bz.apache.org/bugzilla --product=JMeter --data-folder=build/data"
+    $ ./gradlew :bugzilla-backend:run --args="--help"
+
+
+The following command would export attachments from Bugzilla and store them into `build/attachments` folder.
+
+    $ ./gradlew :bugzilla-backend:run --args="export-attachments --data-folder=build/attachments"
 
 License
 -------
