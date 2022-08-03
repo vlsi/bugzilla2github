@@ -17,7 +17,9 @@ import org.slf4j.LoggerFactory
 fun attachmentDir(bugId: BugId): String =
     "${bugId.value.rem(100).toString().padStart(2, '0')}/${bugId.value}"
 
-class ExportAttachments : CliktCommand() {
+class ExportAttachments : CliktCommand(help = """
+    Export attachments from Bugzilla database to a local folder
+""".trimIndent()) {
     companion object {
         val log = LoggerFactory.getLogger(ExportAttachments::class.java)
     }

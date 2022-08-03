@@ -25,7 +25,11 @@ import kotlinx.coroutines.launch
 import org.jetbrains.exposed.sql.Database
 import org.slf4j.LoggerFactory
 
-class Backend : CliktCommand() {
+class Backend : CliktCommand(help = """
+    Spawn a web server that displays bugs from Bugzilla database for preview purposes before data hits GitHub.
+
+    Note: markdown to HTML conversion uses GitHub /markdown API, so you need to specify GITHUB_TOKEN for it to work.
+""".trimIndent()) {
     companion object {
         val log = LoggerFactory.getLogger(Backend::class.java)
     }

@@ -38,7 +38,10 @@ dependencies {
     implementation("org.jetbrains.xodus:xodus-openAPI:_")
     implementation("org.jetbrains.xodus:java-8-time:_")
     implementation("mysql:mysql-connector-java:_")
-    runtimeOnly("ch.qos.logback:logback-classic:_")
+
+    implementation("ch.qos.logback:logback-classic:_") {
+        because("Need to adjust debug on/off")
+    }
 
     testImplementation("org.jetbrains.kotlin:kotlin-test:_")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5:_")
@@ -52,7 +55,7 @@ tasks.test {
     useJUnitPlatform()
 }
 
-if (true) { //project.hasProperty("withFrontend")) {
+if (project.hasProperty("withFrontend")) {
     tasks.processResources {
         into("static") {
             from(frontendJs) {

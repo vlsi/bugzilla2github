@@ -19,23 +19,23 @@ class DbParametersGroup : OptionGroup() {
         "--db-password",
         envvar = "BUGZILLA_DB_PASSWORD",
         help = "Prefer passing the password via BUGZILLA_DB_PASSWORD environment variable"
-    ).defaultLazy { username }
+    ).defaultLazy("same as db-username") { username }
     val type by option("--db-type").enum<DbType>().default(DbType.mysql)
     val name by option("--db-name").default("bugzilla")
     val host by option("--db-host").default("localhost")
     val port by option("--db-port").int()
-        .defaultLazy {
+        .defaultLazy("3306 for db-type=mysql") {
             when (type) {
                 DbType.mysql -> 3306
             }
         }
     val driver by option("--db-driver")
-        .defaultLazy {
+        .defaultLazy("com.mysql.cj.jdbc.Driver for db-type=mysql") {
             when (type) {
                 DbType.mysql -> "com.mysql.cj.jdbc.Driver"
             }
         }
-    val url by option("--db-url").defaultLazy {
+    val url by option("--db-url").defaultLazy("jdbc:\${db-type}://\${db-host}:\${db-port}/\${db-name}") {
         when (type) {
             DbType.mysql -> "jdbc:mysql://$host:$port/$name"
         }
