@@ -57,6 +57,11 @@ class BugzillaExporter(
                     creationDate = it[Bugs.creation_ts],
                     closedWhen = it[bug_closed_when] ?: it[Bugs.lastdiffed],
                     updatedWhen = it[Bugs.lastdiffed],
+                    keywords = (Keywords innerJoin KeywordDefs).slice(KeywordDefs.name)
+                        .select { Keywords.bug_id eq bugId.value }
+                        .distinct()
+                        .map { it[KeywordDefs.name] }
+                        .sorted(),
                     os = it[Bugs.op_sys].let { OperatingSystem(it.value) },
                     markdown = listOf(
                         "Migrated from" to "<a href='${bugzillaUrl.removeSuffix("/")}//show_bug.cgi?id=${bugId.value}'>Bug ${bugId.value}</a>",

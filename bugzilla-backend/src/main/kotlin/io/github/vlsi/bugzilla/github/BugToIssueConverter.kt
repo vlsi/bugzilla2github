@@ -23,6 +23,7 @@ class BugToIssueConverter {
                     add("os: ${bug.os.value}")
                     add("status: ${bug.status.value}")
                     add("bugzilla")
+                    addAll(bug.keywords.map { "keyword: $it" })
                 }
             ),
             comments = bug.comments

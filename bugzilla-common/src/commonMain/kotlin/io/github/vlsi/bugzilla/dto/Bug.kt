@@ -14,6 +14,7 @@ class Bug(
     val creationDate: Instant?,
     val closedWhen: Instant?,
     val updatedWhen: Instant?,
+    val keywords: List<String>,
     val os: OperatingSystem,
     val comments: List<Comment>,
 )
