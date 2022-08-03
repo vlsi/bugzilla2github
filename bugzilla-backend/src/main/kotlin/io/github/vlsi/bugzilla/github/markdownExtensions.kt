@@ -1,6 +1,6 @@
 package io.github.vlsi.bugzilla.github
 
-val BUG_LINK_REGEX = Regex("(see:?|bugzilla:?|bugs?:?|of|in)(?>[ \\t]+#?|#)[ \\t]*([1-9][0-9]{3,4})", RegexOption.IGNORE_CASE)
+val BUG_LINK_REGEX = Regex("(see:?|bugzilla(?:\\s+id)?:?|bugs?:?|of|in)(?>[ \\t]+#?|#)[ \\t]*([1-9][0-9]{3,4})", RegexOption.IGNORE_CASE)
 val COMMENT_ID_REGEX = Regex("(from comment)\\s+#(\\d+)", RegexOption.IGNORE_CASE)
 
 fun fixupMarkdown(bugzillaUrl: String, src: String): String {
