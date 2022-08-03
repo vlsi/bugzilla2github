@@ -8,7 +8,7 @@ import io.github.vlsi.bugzilla.dbexport.BugzillaLinkGenerator
 open class BugzillaParametersGroup: OptionGroup("Bugzilla parameters")
 
 open class BugzillaProductGroup: BugzillaParametersGroup() {
-    val product by option(help = "Bugzilla product name").required()
+    val product by option("--bugzilla-product", help = "Bugzilla product name").required()
 }
 
 open class BugzillaUrlGroup: BugzillaParametersGroup() {
@@ -20,5 +20,5 @@ open class BugzillaUrlGroup: BugzillaParametersGroup() {
 }
 
 open class BugzillaUrlAndProduct: BugzillaUrlGroup() {
-    val product by option(help = "Bugzilla product name").required()
+    val product by option("--bugzilla-product", help = "Bugzilla product name").required()
 }

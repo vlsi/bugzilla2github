@@ -20,8 +20,8 @@ class ConfigValueSource(
             path = path.replaceFirst("db-", "bugzilla.database.")
         } else if (path.startsWith("github-")) {
             path = path.replaceFirst("github-", "github.")
-        } else if (path == "bugzilla-url") {
-            path = "bugzilla.url"
+        } else if (path.startsWith("bugzilla-")) {
+            path = path.replaceFirst("bugzilla-", "bugzilla.")
         }
 
         return when {
