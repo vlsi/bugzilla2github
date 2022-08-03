@@ -9,7 +9,8 @@ import io.github.vlsi.bugzilla.dto.BugStatus as BugStatusDto
 
 class BugzillaExporter(
     private val db: Database,
-    private val bugzillaUrl: String,
+    private val bugLinks: BugLinks,
+    private val gitHubLinkGenerator: GitHubIssueLinkGenerator,
     private val attachmentLinkGenerator: AttachmentLinkGenerator,
 ) {
     val statuses = transaction(db) {
@@ -21,6 +22,21 @@ class BugzillaExporter(
                 )
             }
             .associateBy { it.value }
+    }
+
+    private fun List<BugId>.issueList(markup: Markup = Markup.MARKDOWN): String {
+        val body = joinToString(prefix = "\n\n", separator = "\n", postfix = "\n") {
+            "* " + gitHubLinkGenerator.issueLink(it, markup)
+        }
+        return when {
+            size < 15 -> body
+            else -> "<details><summary>Show details\n\n" +
+                    joinToString(", ") { gitHubLinkGenerator.issueLink(it, markup = markup, includeBugzilla = false) } +
+                    "</summary>" +
+                    body +
+                    "</details>"
+        }
+
     }
 
     fun exportToMarkdown(bugId: BugId): Bug? =
@@ -64,9 +80,13 @@ class BugzillaExporter(
                         .sorted(),
                     os = it[Bugs.op_sys].let { OperatingSystem(it.value) },
                     markdown = listOf(
-                        "Migrated from" to "<a href='${bugzillaUrl.removeSuffix("/")}//show_bug.cgi?id=${bugId.value}'>Bug ${bugId.value}</a>",
+                        "Migrated from" to gitHubLinkGenerator.bugzilla.linkBug(bugId).html,
                         // "Migrated from" to fixupMarkdown(bugzillaUrl, "Bug ${bugId.value}"),
                         "Resolution" to it[Bugs.resolution].takeIf { it.isNotBlank() },
+                        "Duplicates" to bugLinks.duplicates[bugId]?.issueList(),
+                        "Duplicated by" to bugLinks.duplicatedBy[bugId]?.issueList(),
+                        "Depends on" to bugLinks.blockedBy[bugId]?.issueList(),
+                        "Blocks" to bugLinks.blocks[bugId]?.issueList(),
                         "Version" to it[Bugs.version]?.takeIf { it != "unspecified" && it.startsWith("Nightly") },
                         "Target milestone" to it[Bugs.target_milestone].takeIf { it != "---" },
                         "Votes in Bugzilla" to it[Bugs.votes].takeIf { it > 0 }
@@ -117,11 +137,12 @@ class BugzillaExporter(
 //                        }
                         .orderBy(LongDescs.bug_when)
                         .map {
+                            val commentType = it[LongDescs.type]
                             Comment(
                                 created_when = it[LongDescs.bug_when],
                                 markdown =
                                 buildString {
-                                    if (it[LongDescs.type] == CommentTypes.ATTACHMENT_CREATED) {
+                                    if (commentType == CommentTypes.ATTACHMENT_CREATED) {
                                         append(addAttachment(bugId, it))
                                     }
                                     val thetext = it[LongDescs.thetext]
@@ -129,7 +150,16 @@ class BugzillaExporter(
                                         if (isNotEmpty()) {
                                             append("\n\n")
                                         }
-                                        append(fixupMarkdown(bugzillaUrl, thetext))
+                                        append(fixupMarkdown(gitHubLinkGenerator, thetext))
+                                    }
+                                    if (commentType == CommentTypes.DUPE_OF) {
+                                        it[LongDescs.extra_data]?.toInt()?.let { extraData ->
+                                            if (isNotEmpty()) {
+                                                append("\n\n")
+                                            }
+                                            append("This bug has been marked as a duplicate of ")
+                                            append(gitHubLinkGenerator.issueLink(BugId(extraData), Markup.MARKDOWN))
+                                        }
                                     }
                                 },
                                 author = Profile(

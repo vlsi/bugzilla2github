@@ -3,14 +3,19 @@ package io.github.vlsi.bugzilla.commands
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.parameters.groups.provideDelegate
 import com.github.ajalt.clikt.parameters.options.default
+import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.int
 import io.github.vlsi.bugzilla.dbexport.Bugs
 import io.github.vlsi.bugzilla.dbexport.BugzillaExporter
+import io.github.vlsi.bugzilla.dbexport.BugzillaQueries
+import io.github.vlsi.bugzilla.dbexport.ConvBugIssues
 import io.github.vlsi.bugzilla.dto.BugId
 import io.github.vlsi.bugzilla.github.BugToIssueConverter
 import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.Clock
+import org.jetbrains.exposed.sql.and
+import org.jetbrains.exposed.sql.booleanLiteral
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import org.slf4j.LoggerFactory
@@ -23,18 +28,23 @@ class ImportToGitHub : CliktCommand(name = "import-to-github", help = """
     }
 
     val dbParams by DbParametersGroup()
-    val gitHubParams by GitHubParametersGroup()
-    val bugzillaParams by BugzillaParametersGroup()
+    val gitHubParams by GitHubWithAttachmentsParametersGroup()
+    val bugzillaParams by BugzillaUrlAndProduct()
+    val dryRun by option("--dry-run", help = "Don't actually import anything to GitHub").flag()
 
     val firstBugId by option(
-        "--first-bug-id",
-        help = "The first bug_id to import (inclusive). The bugs are imported in the order of increasing the bug_id"
+        help = "The first bug_id to import (exclusive). The bugs are imported in the order of increasing the bug_id"
     ).int().default(0)
+
+    val lastBugId by option(
+        help = "The last bug_id to import (inclusive). The bugs are imported in the order of increasing the bug_id"
+    ).int()
 
     override fun run() {
         val exporter = BugzillaExporter(
             dbParams.connect,
-            bugzillaUrl = bugzillaParams.url,
+            dbParams.bugLinks,
+            gitHubLinkGenerator = gitHubParams.issueLinkGenerator(bugzillaParams.linkGenerator, dbParams.bugToIssue),
             attachmentLinkGenerator = gitHubParams.attachmentLinkGenerator
         )
         val converter = BugToIssueConverter()
@@ -42,18 +52,26 @@ class ImportToGitHub : CliktCommand(name = "import-to-github", help = """
         var imported = 0
         runBlocking {
             newSuspendedTransaction(db = dbParams.connect) {
-                val totalBugs = Bugs.select { Bugs.id greater firstBugId }.count()
-                log.info("Bugs to be migrated {}", totalBugs)
-                Bugs.slice(Bugs.id).select { Bugs.id greater firstBugId }.orderBy(Bugs.id).forEach {
+                val bugsToImport =
+                    BugzillaQueries.allBugs(bugzillaParams.product, includeIssueNumber = true)
+                        .slice(Bugs.id, ConvBugIssues.issue_number)
+                        .select { Bugs.id greater firstBugId and (lastBugId?.let { Bugs.id lessEq it } ?: booleanLiteral(true)) }
+                val totalBugs = bugsToImport.count()
+                log.info("Number of bugs to be migrated {}", totalBugs)
+                bugsToImport.orderBy(Bugs.id).forEach {
                     val bugId = it[Bugs.id].value
                     val bug = exporter.exportToMarkdown(bugId = BugId(bugId))!!
                     val issue = converter.convert(bug)
-                    gitHubParams.gitHubApi.startImport(
-                        username = gitHubParams.organization,
-                        repository = gitHubParams.issuesRepository,
-                        issue = issue,
-                        waitCompletion = false
-                    )
+                    if (dryRun) {
+                        log.info("Dry run: skipping import issue {}", issue)
+                    } else {
+                        gitHubParams.gitHubApi.startImport(
+                            username = gitHubParams.organization,
+                            repository = gitHubParams.issuesRepository,
+                            issue = issue,
+                            waitCompletion = false
+                        )
+                    }
                     imported += 1
                     val duration = Clock.System.now() - start
                     log.info(

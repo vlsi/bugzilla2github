@@ -1,5 +1,8 @@
 package io.github.vlsi.bugzilla.github
 
+import io.github.vlsi.bugzilla.dbexport.BugzillaLinkGenerator
+import io.github.vlsi.bugzilla.dbexport.GitHubIssueLinkGenerator
+import io.github.vlsi.bugzilla.dto.BugId
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 
@@ -7,8 +10,18 @@ class FixMarkdownTest {
     @Test
     internal fun `bugzilla id`() {
         assertEquals(
-            "[Bug 12345](https://bz//show_bug.cgi?id=12345)",
-            fixupMarkdown("https://bz/","Bugzilla Id: 12345")
+            "https://github.com/test-org/repo/issues/42 ([Bug 12345](https://bz//show_bug.cgi?id=12345))",
+            fixupMarkdown(
+                GitHubIssueLinkGenerator(
+                    BugzillaLinkGenerator("https://bz/"),
+                    mapOf(
+                        BugId(12345) to IssueNumber(42)
+                    ),
+                    "test-org",
+                    "repo"
+                ),
+                "Bugzilla Id: 12345"
+            )
         )
     }
 }

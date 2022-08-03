@@ -10,8 +10,6 @@ import io.github.vlsi.bugzilla.dto.BugId
 import io.github.vlsi.bugzilla.dto.MigrateStatusResponse
 import io.github.vlsi.bugzilla.dto.StartMigrateResponse
 import io.github.vlsi.bugzilla.github.BugToIssueConverter
-import io.ktor.client.*
-import io.ktor.client.engine.cio.*
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
@@ -37,8 +35,8 @@ class Backend : CliktCommand(help = """
     val port: Int by option(help = "Port to listen on", valueSourceKey = "ui.port").int().default(8080)
     val host: String by option(help = "Host to listen on", valueSourceKey = "ui.host").default("0.0.0.0")
     val dbParams by DbParametersGroup()
-    val bugzillaParams by BugzillaParametersGroup()
-    val gitHubParams by GitHubParametersGroup()
+    val bugzillaParams by BugzillaUrlGroup()
+    val gitHubParams by GitHubWithAttachmentsParametersGroup()
 
     override fun run() {
         embeddedServer(Netty, port = port, host = host) {
@@ -85,8 +83,8 @@ fun Route.migrationRoutes() {
 
 fun Route.bugRoutes(
     dbParams: DbParametersGroup,
-    bugzillaParams: BugzillaParametersGroup,
-    gitHubParams: GitHubParametersGroup
+    bugzillaParams: BugzillaUrlGroup,
+    gitHubParams: GitHubWithAttachmentsParametersGroup
 ) {
     route("/bug") {
         get {
@@ -96,7 +94,8 @@ fun Route.bugRoutes(
             )
             val exporter = BugzillaExporter(
                 dbParams.connect,
-                bugzillaUrl = bugzillaParams.url,
+                dbParams.bugLinks,
+                gitHubParams.issueLinkGenerator(bugzillaParams.linkGenerator, dbParams.bugToIssue),
                 gitHubParams.attachmentLinkGenerator
             )
             val dto = exporter.exportToMarkdown(BugId(id))
