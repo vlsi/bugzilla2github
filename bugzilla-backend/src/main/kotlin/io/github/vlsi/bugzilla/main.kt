@@ -12,6 +12,7 @@ import com.typesafe.config.ConfigFactory
 import io.github.vlsi.bugzilla.commands.Backend
 import io.github.vlsi.bugzilla.commands.ExportAttachments
 import io.github.vlsi.bugzilla.commands.ImportToGitHub
+import io.github.vlsi.bugzilla.dbexport.MapBugsToIssues
 import org.slf4j.LoggerFactory
 
 class RootCommand: CliktCommand() {
@@ -36,6 +37,7 @@ class RootCommand: CliktCommand() {
 fun main(args: Array<String>) =
     RootCommand()
         .subcommands(ExportAttachments())
+        .subcommands(MapBugsToIssues())
         .subcommands(Backend())
         .subcommands(ImportToGitHub())
         .main(args)
