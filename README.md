@@ -1,4 +1,4 @@
-[![GitHub CI](https://github.com/pgjdbc/pgjdbc/actions/workflows/main.yml/badge.svg?branch=master)](https://github.com/pgjdbc/pgjdbc/actions/workflows/main.yml)
+[![GitHub CI](https://github.com/vlsi/bugzilla2github/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/vlsi/bugzilla2github/actions/workflows/test.yml)
 
 About
 =====
