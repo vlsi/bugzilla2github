@@ -14,10 +14,6 @@ class ConfigValueSource(
 ) : ValueSource {
     private val optionNamer = ValueSource.getKey()
 
-    companion object {
-        val DASH = Regex("-\\w")
-    }
-
     override fun getValues(context: Context, option: Option): List<ValueSource.Invocation> {
         var path = option.valueSourceKey ?: optionNamer(context, option)
         if (path.startsWith("db-")) {
@@ -27,8 +23,6 @@ class ConfigValueSource(
         } else if (path == "bugzilla-url") {
             path = "bugzilla.url"
         }
-        // attachments-repository => attachmentsRepository
-        path = path.replace(DASH) { it.value.substring(1).uppercase() }
 
         return when {
             config.hasPath(path) -> {

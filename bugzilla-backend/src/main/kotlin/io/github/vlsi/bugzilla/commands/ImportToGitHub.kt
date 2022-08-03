@@ -15,7 +15,9 @@ import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import org.slf4j.LoggerFactory
 
-class ImportToGitHub : CliktCommand() {
+class ImportToGitHub : CliktCommand(name = "import-to-github", help = """
+    Import bugs from Bugzilla to GitHub issues starting with given first-bug-id (e.g. to resume from a previous run).
+""".trimIndent()) {
     companion object {
         val log = LoggerFactory.getLogger(ImportToGitHub::class.java)
     }
@@ -24,8 +26,8 @@ class ImportToGitHub : CliktCommand() {
     val gitHubParams by GitHubParametersGroup()
     val bugzillaParams by BugzillaParametersGroup()
 
-    val first_bug_id by option(
-        "--first_bug_id",
+    val firstBugId by option(
+        "--first-bug-id",
         help = "The first bug_id to import (inclusive). The bugs are imported in the order of increasing the bug_id"
     ).int().default(0)
 
