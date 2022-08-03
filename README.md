@@ -111,7 +111,7 @@ This is optional, however, it might be convenient to preview the results before 
 The following command would spawn a web server that could serve the bug description.
 
 ```sh
-./gradlew :bugzilla-backend:run --args="import-to-github"
+./gradlew :bugzilla-backend:run -PwithFrontend=true --args="backend"
 ```
 
 ### 4. Import bugs to GitHub
