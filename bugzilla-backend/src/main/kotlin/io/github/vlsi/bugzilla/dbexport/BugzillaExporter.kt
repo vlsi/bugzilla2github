@@ -161,9 +161,10 @@ class BugzillaExporter(
                             mimetype == "application/json" ||
                             mimetype == "application/php" ||
                             mimetype == "application/perl" ||
+                            mimetype == "application/x-shellscript" ||
                             mimetype == "application/x-extension-jmx" ||
                             mimetype.endsWith("php") ||
-                            mimetype.endsWith("") ||
+                            mimetype.endsWith("perl") ||
                             mimetype.endsWith("jmx")
 
                     )
@@ -173,6 +174,7 @@ class BugzillaExporter(
             res.append("\n```")
             res.append(
                 when {
+                    mimetype == "application/x-shellscript" -> "sh"
                     mimetype.endsWith("jmx") -> "xml"
                     row[Attachments.ispatch] -> "diff"
                     mimetype == "text/plain" -> ""
