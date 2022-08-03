@@ -4,4 +4,6 @@ import kotlinx.serialization.Serializable
 
 @JvmInline
 @Serializable
-actual value class BugSeverity actual constructor(actual val value: String)
+actual value class BugSeverity actual constructor(actual val value: String) {
+    override fun toString() = value
+}

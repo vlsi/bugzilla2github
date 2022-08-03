@@ -4,4 +4,6 @@ import kotlinx.serialization.Serializable
 
 @JvmInline
 @Serializable
-actual value class BugId actual constructor(actual val value: Int)
+actual value class BugId actual constructor(actual val value: Int) {
+    override fun toString() = value.toString()
+}
