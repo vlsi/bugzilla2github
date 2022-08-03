@@ -190,7 +190,31 @@ class BugzillaExporter(
         )
         val thedata = row[AttachData.thedata]
         val mimetype = row[Attachments.mimetype]
+        val knownTextType =
+            when {
+                mimetype == "text/plain" ||
+                mimetype == "text/1" ||
+                mimetype == "text/x-csrc" ||
+                mimetype == "text/x-matlab" ||
+                mimetype == "application/octet-stream"->
+                    when {
+                        fileName.endsWith(".patch") -> "patch"
+                        fileName.endsWith(".diff") -> "diff"
+                        fileName.endsWith(".java") -> "java"
+                        fileName.endsWith(".json") -> "json"
+                        fileName.endsWith(".jmx") -> "xml"
+                        fileName.endsWith(".xml") -> "xml"
+                        fileName.endsWith(".php") -> "php"
+                        fileName.endsWith(".perl") -> "perl"
+                        fileName.endsWith(".sh") -> "sh"
+                        fileName.endsWith(".bat") -> "batch"
+                        fileName.endsWith(".properties") -> "properties"
+                        else -> ""
+                    }
+                else -> null
+            }
         if (thedata != null && thedata.bytes.size < 10000 && (
+                    knownTextType != null ||
                     mimetype.startsWith("text/") ||
                             mimetype == "application/xml" ||
                             mimetype == "application/json" ||
@@ -207,14 +231,12 @@ class BugzillaExporter(
             res.append("\n\n")
             res.append("Preview of ```$fileName```:\n")
             res.append("\n```")
-            res.append(
+            res.append(knownTextType ?:
                 when {
                     mimetype == "application/x-shellscript" -> "sh"
                     mimetype.endsWith("jmx") -> "xml"
                     row[Attachments.ispatch] -> "diff"
-                    mimetype == "text/plain" -> ""
                     mimetype == "text/doc" -> ""
-                    mimetype == "text/1" -> ""
                     mimetype.startsWith("text") ->
                         mimetype.removePrefix("text/x-").removePrefix("text/")
 
