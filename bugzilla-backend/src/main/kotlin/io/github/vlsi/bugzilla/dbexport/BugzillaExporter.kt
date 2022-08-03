@@ -213,7 +213,16 @@ class BugzillaExporter(
                     }
                 else -> null
             }
-        if (thedata != null && thedata.bytes.size < 10000 && (
+        val knownImage =
+            fileName.endsWith(".png") ||
+            fileName.endsWith(".jpg") ||
+            fileName.endsWith(".jpeg") ||
+            fileName.endsWith(".gif") ||
+            fileName.endsWith(".bmp") ||
+            fileName.endsWith(".tiff") ||
+            fileName.endsWith(".svg");
+
+        if (thedata != null && thedata.bytes.size < 10000 && !knownImage && (
                     knownTextType != null ||
                     mimetype.startsWith("text/") ||
                             mimetype == "application/xml" ||
@@ -249,7 +258,7 @@ class BugzillaExporter(
             res.append("\n")
             res.append(thedata.bytes.toString(Charsets.UTF_8))
             res.append("```")
-        } else if (mimetype.startsWith("image/")) {
+        } else if (knownImage || mimetype.startsWith("image/")) {
             // TODO: add description, image dimensions
             res.append("\n\n")
             res.append("<img src='$attachmentLink'>")
