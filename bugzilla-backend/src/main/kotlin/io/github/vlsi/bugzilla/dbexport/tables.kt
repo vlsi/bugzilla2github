@@ -1,5 +1,6 @@
 package io.github.vlsi.bugzilla.dbexport
 
+import org.jetbrains.exposed.sql.Table
 import java.math.BigDecimal
 
 object BugSeverities: StringIdTable("bug_severity", "value") {
@@ -25,6 +26,26 @@ object OperatingSystems: StringIdTable("op_sys", "value") {
     val os_id = integer("id").uniqueIndex()
     val sortkey = integer("sortkey")
     val isactive = bool01("isactive")
+}
+
+object Tags: MediumIntIdTable("tags") {
+    val name = varchar("name", 64)
+    val user_id = reference("user_id", Profiles)
+}
+
+object BugTags: Table("bug_tag") {
+    val bug_id = reference("bug_id", Bugs)
+    val tag_id = reference("tag_id", Tags)
+}
+
+object KeywordDefs: MediumIntIdTable("keyworddefs") {
+    val name = varchar("name", 64)
+    val description = text("description")
+}
+
+object Keywords: Table("keywords") {
+    val bug_id = reference("bug_id", Bugs)
+    val keywordid = reference("keywordid", KeywordDefs)
 }
 
 object Bugs : MediumIntIdTable("bugs", "bug_id") {
@@ -137,4 +158,14 @@ object LongDescs : MediumIntIdTable("longdescs", "comment_id") {
     val already_wrapped = bool01("already_wrapped").default(false)
     val type = dbEnumeration("type", CommentTypes)
     val extra_data = varchar("extra_data", 255).nullable()
+}
+
+object Duplicates: Table("duplicates") {
+    val dupe_of = reference("dupe_of", Bugs)
+    val dupe = reference("dupe", Bugs)
+}
+
+object Dependencies: Table("dependencies") {
+    val blocked = reference("blocked", Bugs)
+    val dependson = reference("dependson", Bugs)
 }
