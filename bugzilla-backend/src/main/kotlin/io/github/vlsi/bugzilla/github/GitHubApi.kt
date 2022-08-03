@@ -109,4 +109,27 @@ class GitHubApi(
             log.debug("Markdown render results: {}", it)
         }
     }
+
+    @Serializable
+    class IssueInfo(
+        val number: Int
+    )
+
+    suspend fun getLastIssueNumber(username: String, repository: String): IssueNumber {
+        log.debug("Retrieving the last issue number from {}/{}", username, repository)
+        httpClient.get("https://api.github.com/repos") {
+            url {
+                appendPathSegments(username, repository, "issues")
+                parameter("per_page", 1)
+            }
+            requestHeaders()
+        }.let {
+            val resp = it.bodyAsText()
+            log.debug("Last issue number response: {}", resp)
+            val issues = jsonConfig.decodeFromString<List<IssueInfo>>(resp)
+            log.info("Last issue number in {}/{} is {}", username, repository, issues.firstOrNull()?.number)
+            return IssueNumber(issues.firstOrNull()?.number ?: 0)
+        }
+    }
+
 }
