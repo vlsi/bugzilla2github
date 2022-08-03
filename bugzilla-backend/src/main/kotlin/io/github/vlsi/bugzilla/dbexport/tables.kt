@@ -1,6 +1,5 @@
 package io.github.vlsi.bugzilla.dbexport
 
-import org.jetbrains.exposed.dao.id.IntIdTable
 import java.math.BigDecimal
 
 object BugSeverities: StringIdTable("bug_severity", "value") {
@@ -28,7 +27,7 @@ object OperatingSystems: StringIdTable("op_sys", "value") {
     val isactive = bool01("isactive")
 }
 
-object Bugs : IntIdTable("bugs", "bug_id") {
+object Bugs : MediumIntIdTable("bugs", "bug_id") {
     val assigned_to = integer("assigned_to")
     val bug_file_loc = text("bug_file_loc")
     val bug_severity = reference("bug_severity", BugSeverities)
@@ -57,7 +56,7 @@ object Bugs : IntIdTable("bugs", "bug_id") {
     val deadline = instantAsUtcDateTime("deadline").nullable()
 }
 
-object FieldDefs: IntIdTable("fielddefs", "id") {
+object FieldDefs: MediumIntIdTable("fielddefs", "id") {
     val name = varchar("name", 64)
     val description = varchar("description", 255)
 //    val type = varchar("type", 64)
@@ -74,7 +73,7 @@ object FieldDefs: IntIdTable("fielddefs", "id") {
     val long_desc = varchar("long_desc", 255)
 }
 
-object BugsActivity: IntIdTable("bugs_activity", "id") {
+object BugsActivity: MediumIntIdTable("bugs_activity", "id") {
     val bug_id = reference("bug_id", Bugs)
     val who = reference("who", Profiles)
     val bug_when = instantAsUtcDateTime("bug_when")
@@ -85,7 +84,7 @@ object BugsActivity: IntIdTable("bugs_activity", "id") {
     val comment_id = reference("comment_id", LongDescs).nullable()
 }
 
-object Profiles : IntIdTable("profiles", "userid") {
+object Profiles : MediumIntIdTable("profiles", "userid") {
     val login_name = varchar("login_name", 255).uniqueIndex()
     val realname = varchar("realname", 255).default("")
     val disabledtext = text("disabledtext")
@@ -96,7 +95,7 @@ object Profiles : IntIdTable("profiles", "userid") {
     val last_seen_date = instantAsUtcDateTime("last_seen_date").nullable()
 }
 
-object Products : IntIdTable("products", "id") {
+object Products : MediumIntIdTable("products", "id") {
     val name = varchar("name", 64).uniqueIndex()
     val description = text("description")
     val votesperuser = integer("votesperuser").default(0)
@@ -107,7 +106,7 @@ object Products : IntIdTable("products", "id") {
     val allows_unconfirmed = bool01("allows_unconfirmed").default(true)
 }
 
-object Attachments : IntIdTable("attachments", "attach_id") {
+object Attachments : MediumIntIdTable("attachments", "attach_id") {
     val bug_id = reference("bug_id", Bugs)
     val creation_ts = instantAsUtcDateTime("creation_ts")
     val description = varchar("description", 255)
@@ -120,7 +119,7 @@ object Attachments : IntIdTable("attachments", "attach_id") {
     val modification_time = instantAsUtcDateTime("modification_time")
 }
 
-object AttachData : IntIdTable("attach_data", "id") {
+object AttachData : MediumIntIdTable("attach_data", "id") {
     val thedata = blob("thedata")
 
     init {
@@ -128,7 +127,7 @@ object AttachData : IntIdTable("attach_data", "id") {
     }
 }
 
-object LongDescs : IntIdTable("longdescs", "comment_id") {
+object LongDescs : MediumIntIdTable("longdescs", "comment_id") {
     val bug_id = reference("bug_id", Bugs)
     val who = reference("who", Profiles)
     val bug_when = instantAsUtcDateTime("bug_when")
