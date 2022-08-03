@@ -18,7 +18,7 @@ class MapBugsToIssues : CliktCommand(
     val gitHubParams by GitHubParametersGroup()
     val bugzillaParams by BugzillaProductGroup()
 
-    val firstIssueNumber by option(help = "The id of the first issue to be created (0 if repository contains no issues and no pull requests")
+    val latestIssueNumber by option(help = "The number of the latest existing issue (0 if repository contains no issues and no pull requests")
 
     override fun run() {
         transaction(dbParams.connect) {
@@ -36,7 +36,7 @@ class MapBugsToIssues : CliktCommand(
                     .orderBy(Bugs.id)
             ) {
                 this[ConvBugIssues.bug_id] = it[Bugs.id]
-                this[ConvBugIssues.issue_number] = (firstIssueNumber + it[rowNum]).toInt()
+                this[ConvBugIssues.issue_number] = (latestIssueNumber + it[rowNum]).toInt()
             }
         }
     }

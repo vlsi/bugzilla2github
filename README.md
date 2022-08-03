@@ -91,7 +91,17 @@ You can fetch the latest issue number via the following API:
 Then you need to create the mapping table:
 
 ```sh
-./gradlew :bugzilla-backend:run --args="map-bugs-to-issues"
+./gradlew :bugzilla-backend:run --args="map-bugs-to-issues --latest-issue-number=0"
+```
+
+The created `conv_bug_issues` table might be helpful to post-process existing bugs.
+For instance, the following query would add comment that says the bug has been migrated
+
+```sql
+insert into long_descs (bug_id, who, bug_when, thetext)
+  select c.bug_id, p.userid, now(), 'This bug has been migrated to GitHub: https://github.com/organization/repository/issues/'||c.issue_number
+    from conf_bug_issues c, profiles p
+   where p.login_name = '...'
 ```
 
 ### 3. Preview the conversion results
