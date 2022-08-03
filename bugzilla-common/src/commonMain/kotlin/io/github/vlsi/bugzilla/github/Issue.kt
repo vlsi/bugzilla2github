@@ -6,20 +6,20 @@ import kotlinx.serialization.Serializable
 // See https://gist.github.com/jonmagic/5282384165e0f86ef105#supported-issue-and-comment-fields
 
 @Serializable
-class ImportIssueRequest(
+data class ImportIssueRequest(
     val issue: Issue,
-    val comments: List<Comment>
+    val comments: List<Comment> = listOf()
 )
 
 @Serializable
-class IssueImportStatusResponse(
+data class IssueImportStatusResponse(
     val id: Int,
     val status: String,
     val url: String,
 )
 
 @Serializable
-class Issue(
+data class Issue(
     val title: String,
     val created_at: Instant? = null,
     val closed_at: Instant? = null,
@@ -32,7 +32,7 @@ class Issue(
 )
 
 @Serializable
-class Comment(
+data class Comment(
     val created_at: Instant? = null,
     val body: String,
 )
