@@ -51,6 +51,7 @@ class GitHubApi(
         val getStatusUrl = status.url
         if (status.status == "pending") {
             while (true) {
+                delay(500)
                 val statusResp = httpClient.get(getStatusUrl) {
                     requestHeaders()
                 }
@@ -61,7 +62,6 @@ class GitHubApi(
                 if (statusRespStatus != "pending") {
                     break
                 }
-                delay(1000)
             }
         }
     }

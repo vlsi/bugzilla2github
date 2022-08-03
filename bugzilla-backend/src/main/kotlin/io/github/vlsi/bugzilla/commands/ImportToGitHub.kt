@@ -69,7 +69,7 @@ class ImportToGitHub : CliktCommand(name = "import-to-github", help = """
                             username = gitHubParams.organization,
                             repository = gitHubParams.issuesRepository,
                             issue = issue,
-                            waitCompletion = false
+                            waitCompletion = true
                         )
                     }
                     imported += 1
