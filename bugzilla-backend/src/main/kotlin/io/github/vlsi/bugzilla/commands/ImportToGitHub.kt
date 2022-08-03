@@ -42,8 +42,9 @@ class ImportToGitHub : CliktCommand(name = "import-to-github", help = """
         var imported = 0
         runBlocking {
             newSuspendedTransaction(db = dbParams.connect) {
-                val totalBugs = Bugs.select { Bugs.id greater 61352 }.count()
-                Bugs.slice(Bugs.id).select { Bugs.id greater 61352 }.orderBy(Bugs.id).forEach {
+                val totalBugs = Bugs.select { Bugs.id greater firstBugId }.count()
+                log.info("Bugs to be migrated {}", totalBugs)
+                Bugs.slice(Bugs.id).select { Bugs.id greater firstBugId }.orderBy(Bugs.id).forEach {
                     val bugId = it[Bugs.id].value
                     val bug = exporter.exportToMarkdown(bugId = BugId(bugId))!!
                     val issue = converter.convert(bug)
