@@ -7,7 +7,15 @@ import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.options.required
 import com.github.ajalt.clikt.parameters.types.enum
 import com.github.ajalt.clikt.parameters.types.int
+import io.github.vlsi.bugzilla.dbexport.BugLinks
+import io.github.vlsi.bugzilla.dbexport.ConvBugIssues
+import io.github.vlsi.bugzilla.dbexport.Dependencies
+import io.github.vlsi.bugzilla.dbexport.Duplicates
+import io.github.vlsi.bugzilla.dto.BugId
+import io.github.vlsi.bugzilla.github.IssueNumber
 import org.jetbrains.exposed.sql.Database
+import org.jetbrains.exposed.sql.selectAll
+import org.jetbrains.exposed.sql.transactions.transaction
 
 class DbParametersGroup : OptionGroup() {
     enum class DbType {
@@ -48,5 +56,24 @@ class DbParametersGroup : OptionGroup() {
             user = username,
             password = password,
         )
+    }
+
+    val bugToIssue by lazy {
+        transaction(connect) {
+            ConvBugIssues.selectAll()
+                .associateBy({ BugId(it[ConvBugIssues.bug_id].value) }, { IssueNumber(it[ConvBugIssues.issue_number]) })
+        }
+    }
+
+    val bugLinks by lazy {
+        transaction(connect) {
+            val duplicates = Duplicates.selectAll()
+                .map { BugId(it[Duplicates.dupe].value) to BugId(it[Duplicates.dupe_of].value) }
+
+            val dependencies = Dependencies.selectAll()
+                .map { BugId(it[Dependencies.blocked].value) to BugId(it[Dependencies.dependson].value) }
+
+            BugLinks(duplicates, dependencies)
+        }
     }
 }
