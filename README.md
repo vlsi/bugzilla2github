@@ -34,7 +34,7 @@ Usage
 
 ### 1. Configure URLs
 
-Adjust `bugzilla-backend/src/main/resources/application.properties` as needed.
+Adjust `bugzilla-backend/src/main/resources/application.conf` as needed.
 
 Here's a sample configuration:
 
