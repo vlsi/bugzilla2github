@@ -169,6 +169,8 @@ class BugzillaExporter(
                                     }
                                 )
                             )
+                        }.let { list ->
+                            list.filterIndexed { index, comment -> index == 0 || comment != list[index - 1] }
                         }
                 )
             }
