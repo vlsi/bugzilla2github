@@ -31,7 +31,7 @@ class BugzillaExporter(
         return when {
             size < 15 -> body
             else -> "<details><summary>Show details\n\n" +
-                    joinToString(", ") { gitHubLinkGenerator.issueLink(it, markup = markup, includeBugzilla = false) } +
+                    joinToString(", ") { gitHubLinkGenerator.issueLink(it, markup = markup) } +
                     "</summary>" +
                     body +
                     "</details>"
