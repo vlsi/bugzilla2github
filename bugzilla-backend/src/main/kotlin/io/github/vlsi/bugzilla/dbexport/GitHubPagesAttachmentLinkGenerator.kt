@@ -6,6 +6,9 @@ import io.github.vlsi.bugzilla.dto.BugId
 import io.ktor.http.*
 import io.ktor.server.util.*
 
+private val needEncodePercent = "%20".encodeURLPath() == "%20"
+private val semiEscaped = Regex("%([0-9a-z]{2})")
+
 class GitHubPagesAttachmentLinkGenerator(
     private val organization: String,
     private val repository: String,
@@ -14,6 +17,14 @@ class GitHubPagesAttachmentLinkGenerator(
         url {
             protocol = URLProtocol.HTTPS
             host = "$organization.github.io"
-            path(repository, attachmentDir(bugId), "${attachId.value}-$filename")
+            appendPathSegments(repository)
+            appendEncodedPathSegments(attachmentDir(bugId))
+            val encodedFileName = if (needEncodePercent) {
+                // ktor fails to escape patterns that look like "already escaped" %XX
+                filename.replace(semiEscaped, "%25$1")
+            } else {
+                filename
+            }
+            appendPathSegments("${attachId.value}-$encodedFileName")
         }
 }
