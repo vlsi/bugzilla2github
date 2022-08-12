@@ -24,4 +24,23 @@ class FixMarkdownTest {
             )
         )
     }
+
+    @Test
+    internal fun `bugzilla url`() {
+        assertEquals(
+            "See #42, #43",
+            fixupMarkdown(
+                GitHubIssueLinkGenerator(
+                    BugzillaLinkGenerator("https://bz/", listOf("https://issues")),
+                    mapOf(
+                        BugId(12345) to IssueNumber(42),
+                        BugId(12346) to IssueNumber(43),
+                    ),
+                    "test-org",
+                    "repo"
+                ),
+                "See https://bz/show_bug.cgi?id=12345, https://issues/show_bug.cgi?id=12346"
+            )
+        )
+    }
 }

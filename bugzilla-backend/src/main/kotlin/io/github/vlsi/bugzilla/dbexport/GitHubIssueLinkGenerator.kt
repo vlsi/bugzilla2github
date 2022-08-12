@@ -9,6 +9,18 @@ class GitHubIssueLinkGenerator(
     val organization: String,
     val repository: String,
 ) {
+    val bugLinkRegex = Regex(
+        (bugzilla.alternativeUrls + bugzilla.bugzillaUrl).toSet()
+            .map { Regex.escape(it.removeSuffix("/")) }
+            .joinToString("|", prefix = "(?>", postfix = ")") + "/show_bug\\.cgi\\?id=(\\d+)"
+    )
+
+    fun replaceBugzillaLinks(text: String) =
+        text.replace(bugLinkRegex) {
+            val bugId = BugId(it.groupValues[1].toInt())
+            bugToIssue[bugId]?.let { "#$it" } ?: it.value
+        }
+
     fun issueLink(bugId: BugId, markup: Markup) : String {
         val issueId = bugToIssue[bugId] ?: return bugzilla.linkBug(bugId).let {
             when(markup) {

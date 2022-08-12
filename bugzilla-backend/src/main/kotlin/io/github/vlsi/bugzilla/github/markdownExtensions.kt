@@ -19,5 +19,6 @@ fun fixupMarkdown(gitHubIssueLinkGenerator: GitHubIssueLinkGenerator, src: Strin
                 mr.groupValues[1] + " " + link
             }
         }
+        .let { gitHubIssueLinkGenerator.replaceBugzillaLinks(it) }
         .replace(COMMENT_ID_REGEX, "$1 $2")
 }

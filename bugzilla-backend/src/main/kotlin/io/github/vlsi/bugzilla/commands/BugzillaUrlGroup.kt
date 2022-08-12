@@ -1,6 +1,7 @@
 package io.github.vlsi.bugzilla.commands
 
 import com.github.ajalt.clikt.parameters.groups.OptionGroup
+import com.github.ajalt.clikt.parameters.options.multiple
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.options.required
 import io.github.vlsi.bugzilla.dbexport.BugzillaLinkGenerator
@@ -13,9 +14,13 @@ open class BugzillaProductGroup: BugzillaParametersGroup() {
 
 open class BugzillaUrlGroup: BugzillaParametersGroup() {
     val url by option("--bugzilla-url", help = "Bugzilla URL (e.g. https://bz.apache.org/bugzilla/)").required()
+    val alternativeUrls by option("--bugzilla-alternative-url", help = "Alternative URLs for Bugzilla").multiple()
 
     val linkGenerator by lazy {
-        BugzillaLinkGenerator(url)
+        BugzillaLinkGenerator(
+            url,
+            alternativeUrls,
+        )
     }
 }
 

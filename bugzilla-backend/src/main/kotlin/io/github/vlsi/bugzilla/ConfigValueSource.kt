@@ -29,6 +29,7 @@ class ConfigValueSource(
                 val value = config.getValue(path)
                 when(value.valueType()) {
                     ConfigValueType.NULL -> emptyList()
+                    ConfigValueType.LIST -> (value.unwrapped() as List<*>).map { ValueSource.Invocation.value(it) }
                     else -> ValueSource.Invocation.just(value.unwrapped())
                 }
             }
