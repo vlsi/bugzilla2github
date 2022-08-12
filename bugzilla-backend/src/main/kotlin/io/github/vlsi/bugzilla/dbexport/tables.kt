@@ -1,5 +1,6 @@
 package io.github.vlsi.bugzilla.dbexport
 
+import io.github.vlsi.bugzilla.exposed.*
 import org.jetbrains.exposed.sql.Table
 import java.math.BigDecimal
 

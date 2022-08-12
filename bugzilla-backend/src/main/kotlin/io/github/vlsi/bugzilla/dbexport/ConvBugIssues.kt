@@ -1,5 +1,6 @@
 package io.github.vlsi.bugzilla.dbexport
 
+import io.github.vlsi.bugzilla.exposed.mediumint
 import org.jetbrains.exposed.dao.id.IntIdTable
 
 object ConvBugIssues: IntIdTable("conv_bug_issues") {

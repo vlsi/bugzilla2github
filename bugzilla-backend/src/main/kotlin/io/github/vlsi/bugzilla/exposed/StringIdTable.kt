@@ -1,4 +1,4 @@
-package io.github.vlsi.bugzilla.dbexport
+package io.github.vlsi.bugzilla.exposed
 
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.dao.id.IdTable
