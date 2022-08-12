@@ -25,7 +25,7 @@ class BugzillaExporter(
     }
 
     private fun List<BugId>.issueList(markup: Markup = Markup.MARKDOWN): String {
-        val body = joinToString(prefix = "\n\n", separator = "\n", postfix = "\n") {
+        val body = joinToString(separator = "\n") {
             "* " + gitHubLinkGenerator.issueLink(it, markup)
         }
         return when {
@@ -83,10 +83,6 @@ class BugzillaExporter(
                         "Migrated from" to gitHubLinkGenerator.bugzilla.linkBug(bugId).html,
                         // "Migrated from" to fixupMarkdown(bugzillaUrl, "Bug ${bugId.value}"),
                         "Resolution" to it[Bugs.resolution].takeIf { it.isNotBlank() },
-                        "Duplicates" to bugLinks.duplicates[bugId]?.issueList(),
-                        "Duplicated by" to bugLinks.duplicatedBy[bugId]?.issueList(),
-                        "Depends on" to bugLinks.blockedBy[bugId]?.issueList(),
-                        "Blocks" to bugLinks.blocks[bugId]?.issueList(),
                         "Version" to it[Bugs.version]?.takeIf { it != "unspecified" && it.startsWith("Nightly") },
                         "Target milestone" to it[Bugs.target_milestone].takeIf { it != "---" },
                         "Votes in Bugzilla" to it[Bugs.votes].takeIf { it > 0 }
@@ -94,8 +90,17 @@ class BugzillaExporter(
                         .joinToString(
                             separator = "\n",
                             prefix = "<table>\n",
-                            postfix = "</table>\n"
-                        ) { "<tr><th>${it.first}</th><td>${it.second}</td></tr>" },
+                            postfix = "</table>\n\n"
+                        ) { "<tr><th>${it.first}</th><td>${it.second}</td></tr>" } +
+                            listOf(
+                                "Duplicates" to bugLinks.duplicates[bugId]?.issueList(),
+                                "Duplicated by" to bugLinks.duplicatedBy[bugId]?.issueList(),
+                                "Depends on" to bugLinks.blockedBy[bugId]?.issueList(),
+                                "Blocks" to bugLinks.blocks[bugId]?.issueList(),
+                            ).filter { it.second != null && it.second.toString().isNotBlank() }
+                                .joinToString("\n\n") {
+                                    "${it.first}:\n${it.second}"
+                                },
                     comments = (LongDescs innerJoin Profiles)
                         .join(
                             Attachments,
