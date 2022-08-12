@@ -6,7 +6,7 @@ import io.github.vlsi.bugzilla.dto.Bug
 
 class BugToIssueConverter {
     private val io.github.vlsi.bugzilla.dto.Comment.githubMarkdown: String
-        get() = "**${author.realname}**:\n" + markdown
+        get() = (author.githubProfile?.let { "@$it" } ?: "**${author.realname}**") + ":\n$markdown"
 
     fun convert(bug: Bug): ImportIssueRequest =
         ImportIssueRequest(

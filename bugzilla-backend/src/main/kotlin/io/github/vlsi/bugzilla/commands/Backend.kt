@@ -5,7 +5,9 @@ import com.github.ajalt.clikt.parameters.groups.provideDelegate
 import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.int
+import io.github.vlsi.bugzilla.configuration
 import io.github.vlsi.bugzilla.dbexport.BugzillaExporter
+import io.github.vlsi.bugzilla.dbexport.GitHubUserMapping
 import io.github.vlsi.bugzilla.dto.BugId
 import io.github.vlsi.bugzilla.dto.MigrateStatusResponse
 import io.github.vlsi.bugzilla.dto.StartMigrateResponse
@@ -87,6 +89,7 @@ fun Route.bugRoutes(
     gitHubParams: GitHubWithAttachmentsParametersGroup
 ) {
     route("/bug") {
+        val gitHubUserMapping = GitHubUserMapping(configuration)
         get {
             val id = call.parameters["id"]?.toIntOrNull() ?: return@get call.respondText(
                 "Missing id",
@@ -96,7 +99,8 @@ fun Route.bugRoutes(
                 dbParams.connect,
                 dbParams.bugLinks,
                 gitHubParams.issueLinkGenerator(bugzillaParams.linkGenerator, dbParams.bugToIssue),
-                gitHubParams.attachmentLinkGenerator
+                gitHubParams.attachmentLinkGenerator,
+                gitHubUserMapping,
             )
             val dto = exporter.exportToMarkdown(BugId(id))
             if (dto == null) {

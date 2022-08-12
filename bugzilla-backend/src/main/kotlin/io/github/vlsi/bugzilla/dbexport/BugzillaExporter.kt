@@ -13,6 +13,7 @@ class BugzillaExporter(
     private val bugLinks: BugLinks,
     private val gitHubLinkGenerator: GitHubIssueLinkGenerator,
     private val attachmentLinkGenerator: AttachmentLinkGenerator,
+    private val gitHubUserMapping: GitHubUserMapping,
 ) {
     val statuses = transaction(db) {
         BugStatuses.selectAll()
@@ -172,7 +173,8 @@ class BugzillaExporter(
                                     login = it[Profiles.login_name],
                                     realname = it[Profiles.realname].ifBlank {
                                         it[Profiles.login_name].substringBefore('@')
-                                    }
+                                    },
+                                    githubProfile = gitHubUserMapping.gitHubLoginOrNull(it[Profiles.login_name]),
                                 )
                             )
                         }.let { list ->

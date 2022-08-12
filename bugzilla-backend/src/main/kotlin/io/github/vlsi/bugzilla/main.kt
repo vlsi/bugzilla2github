@@ -15,10 +15,12 @@ import io.github.vlsi.bugzilla.commands.ImportToGitHub
 import io.github.vlsi.bugzilla.dbexport.MapBugsToIssues
 import org.slf4j.LoggerFactory
 
+val configuration = ConfigFactory.load()
+
 class RootCommand: CliktCommand() {
     init {
         context {
-            valueSource = ConfigValueSource(ConfigFactory.load())
+            valueSource = ConfigValueSource(configuration)
             helpFormatter = CliktHelpFormatter(showDefaultValues = true, showRequiredTag = true, maxWidth = 120)
         }
     }

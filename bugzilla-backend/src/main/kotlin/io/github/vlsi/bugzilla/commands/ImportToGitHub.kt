@@ -6,10 +6,8 @@ import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.int
-import io.github.vlsi.bugzilla.dbexport.Bugs
-import io.github.vlsi.bugzilla.dbexport.BugzillaExporter
-import io.github.vlsi.bugzilla.dbexport.BugzillaQueries
-import io.github.vlsi.bugzilla.dbexport.ConvBugIssues
+import io.github.vlsi.bugzilla.configuration
+import io.github.vlsi.bugzilla.dbexport.*
 import io.github.vlsi.bugzilla.dto.BugId
 import io.github.vlsi.bugzilla.github.BugToIssueConverter
 import kotlinx.coroutines.runBlocking
@@ -45,7 +43,8 @@ class ImportToGitHub : CliktCommand(name = "import-to-github", help = """
             dbParams.connect,
             dbParams.bugLinks,
             gitHubLinkGenerator = gitHubParams.issueLinkGenerator(bugzillaParams.linkGenerator, dbParams.bugToIssue),
-            attachmentLinkGenerator = gitHubParams.attachmentLinkGenerator
+            attachmentLinkGenerator = gitHubParams.attachmentLinkGenerator,
+            gitHubUserMapping = GitHubUserMapping(configuration),
         )
         val converter = BugToIssueConverter()
         val start = Clock.System.now()

@@ -6,4 +6,5 @@ import kotlinx.serialization.Serializable
 data class Profile(
     val login: String,
     val realname: String,
+    val githubProfile: String? = null,
 )
