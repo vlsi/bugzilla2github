@@ -55,8 +55,8 @@ class Transport(private val coroutineContext: CoroutineContext) {
         )
     }
 
-    private suspend fun fetch(httpMethod: String, method: String, vararg args: Pair<String, Any>): String {
-        var url = "/api/$method"
+    private suspend fun fetch(httpMethod: String, path: String, vararg args: Pair<String, Any>): String {
+        var url = "/api/$path"
         if (args.isNotEmpty()) {
             url += "?"
             url += args.joinToString("&", transform = { "${it.first}=${urlEncode(it.second.toString())}" })
