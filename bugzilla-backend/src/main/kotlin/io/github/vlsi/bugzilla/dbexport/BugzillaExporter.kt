@@ -208,6 +208,7 @@ class BugzillaExporter(
                         fileName.endsWith(".patch") -> "patch"
                         fileName.endsWith(".diff") -> "diff"
                         fileName.endsWith(".java") -> "java"
+                        fileName.endsWith(".js") -> "js"
                         fileName.endsWith(".json") -> "json"
                         fileName.endsWith(".jmx") -> "xml"
                         fileName.endsWith(".xml") -> "xml"
@@ -240,6 +241,7 @@ class BugzillaExporter(
                             mimetype == "application/x-extension-jmx" ||
                             mimetype.endsWith("php") ||
                             mimetype.endsWith("perl") ||
+                            mimetype.endsWith("javascript") ||
                             mimetype.endsWith("jmx")
 
                     )
