@@ -2,6 +2,7 @@ package io.github.vlsi.bugzilla.dbexport
 
 import io.github.vlsi.bugzilla.dto.*
 import io.github.vlsi.bugzilla.github.fixupMarkdown
+import io.ktor.util.*
 import kotlinx.datetime.Instant
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -192,8 +193,9 @@ class BugzillaExporter(
             fileName
         )
         // TODO: escape description
+        val description = row[Attachments.description]
         res.append(
-            "Created attachment [${fileName.replace("]", "\\]")}]($attachmentLink) (${row[Attachments.description]})"
+            "Created attachment ${Link(fileName, attachmentLink).markdown}: $description"
         )
         val thedata = row[AttachData.thedata]
         val mimetype = row[Attachments.mimetype]
@@ -268,13 +270,11 @@ class BugzillaExporter(
             res.append(thedata.bytes.toString(Charsets.UTF_8))
             res.append("```")
         } else if (knownImage || mimetype.startsWith("image/")) {
-            // TODO: add description, image dimensions
             res.append("\n\n")
-            res.append("<img src='$attachmentLink'>")
+            res.append("<img src='$attachmentLink' alt='${description.escapeHTML()}'>")
         } else if (mimetype.startsWith("video/")) {
-            // TODO: add description, image dimensions
             res.append("\n\n")
-            res.append("<video src='$attachmentLink'>")
+            res.append("<video src='$attachmentLink' title='${description.escapeHTML()}'>")
         }
         return res.toString()
     }
