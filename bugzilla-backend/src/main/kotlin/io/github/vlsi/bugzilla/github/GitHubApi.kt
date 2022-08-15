@@ -5,15 +5,19 @@ import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
 import kotlinx.coroutines.delay
+import kotlinx.datetime.Clock
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.SerializationException
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.slf4j.LoggerFactory
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.hours
 
 class GitHubApi(
-    private val token: String,
-    val httpClient: HttpClient,
+    private val delayBetweenApiCalls: Duration,
+    private val httpClient: HttpClient,
 ) {
     companion object {
         val log = LoggerFactory.getLogger(GitHubApi::class.java)
@@ -22,6 +26,26 @@ class GitHubApi(
     private val jsonConfig = Json {
         prettyPrint = true
         ignoreUnknownKeys = true
+    }
+
+    private fun HttpRequestBuilder.acceptGitHubJson() {
+        headers {
+            append("Accept", "application/vnd.github+json")
+        }
+    }
+
+    var lastRequestCompleted = Clock.System.now() - 24.hours
+
+    private suspend fun <T> throttle(body: suspend () -> T): T {
+        val elapsedDelay = Clock.System.now() - lastRequestCompleted - delayBetweenApiCalls
+        if (elapsedDelay < Duration.ZERO) {
+            delay(-elapsedDelay)
+        }
+        try {
+            return body()
+        } finally {
+            lastRequestCompleted = Clock.System.now()
+        }
     }
 
     suspend fun startImport(
@@ -33,31 +57,40 @@ class GitHubApi(
         // https://gist.github.com/jonmagic/5282384165e0f86ef105
         val str = jsonConfig.encodeToString(issue)
         log.debug("Starting issue import: {}", str)
-
-        val results = httpClient.post("https://api.github.com/repos") {
-            url {
-                appendPathSegments(username, repository, "import", "issues")
-                requestHeaders()
+        val results = throttle {
+            httpClient.post {
+                url {
+                    appendPathSegments("repos", username, repository, "import", "issues")
+                }
+                bulkIssueImportApiHeaders()
+                setBody(str)
             }
-            setBody(str)
         }
-        val resp = results.bodyAsText()
+        val responseText = results.bodyAsText()
         if (!waitCompletion) {
-            delay(500)
             return
         }
-        log.debug("Issue import status: {}", resp)
-        val status = jsonConfig.decodeFromString<IssueImportStatusResponse>(resp)
+        log.debug("Issue import status: {}", responseText)
+        val status = try {
+            jsonConfig.decodeFromString<IssueImportStatusResponse>(responseText)
+        } catch (e: SerializationException) {
+            throw IllegalStateException("Unexpected response: $responseText")
+        }
         val getStatusUrl = status.url
         if (status.status == "pending") {
             while (true) {
-                delay(500)
-                val statusResp = httpClient.get(getStatusUrl) {
-                    requestHeaders()
+                val statusResp = throttle {
+                    httpClient.get(getStatusUrl) {
+                        bulkIssueImportApiHeaders()
+                    }
                 }
                 val statusRespStr = statusResp.bodyAsText()
                 log.debug("Issue import status: {}", statusRespStr)
-                val statusRespJson = jsonConfig.decodeFromString<IssueImportStatusResponse>(statusRespStr)
+                val statusRespJson = try {
+                    jsonConfig.decodeFromString<IssueImportStatusResponse>(statusRespStr)
+                } catch (e: SerializationException) {
+                    throw IllegalStateException("Unexpected response: $statusRespStr")
+                }
                 val statusRespStatus = statusRespJson.status
                 if (statusRespStatus != "pending") {
                     break
@@ -66,44 +99,26 @@ class GitHubApi(
         }
     }
 
-    private fun HttpRequestBuilder.authorization() {
-        headers {
-            append("Authorization", "token $token")
-        }
-    }
-
-    private fun HttpRequestBuilder.requestHeaders() {
-        authorization()
+    private fun HttpRequestBuilder.bulkIssueImportApiHeaders() {
         headers {
             append("Accept", "application/vnd.github.golden-comet-preview+json")
         }
     }
-
-
-    @Serializable
-    enum class RenderMarkdownMode {
-        markdown, gfm;
-    }
-
-    @Serializable
-    class RenderMarkdownRequest(
-        val text: String,
-        val mode: RenderMarkdownMode,
-        val context: String,
-    )
 
     suspend fun render(markdown: String, organization: String, repository: String): String {
         val str = jsonConfig.encodeToString(
             RenderMarkdownRequest(text = markdown, mode = RenderMarkdownMode.gfm, context = "$organization/$repository")
         )
         log.debug("Sending request to render markdown: {}", str)
-        val results = httpClient.post("https://api.github.com/markdown") {
-            authorization()
-            headers {
-                append("Accept", "application/vnd.github+json")
-            }
+        val results = throttle {
+            httpClient.post {
+                url {
+                    path("markdown")
+                }
+                acceptGitHubJson()
 
-            setBody(str)
+                setBody(str)
+            }
         }
         return results.bodyAsText().also {
             log.debug("Markdown render results: {}", it)
@@ -112,24 +127,25 @@ class GitHubApi(
 
     @Serializable
     class IssueInfo(
-        val number: Int
+        val number: IssueNumber
     )
 
     suspend fun getLastIssueNumber(username: String, repository: String): IssueNumber {
         log.debug("Retrieving the last issue number from {}/{}", username, repository)
-        httpClient.get("https://api.github.com/repos") {
-            url {
-                appendPathSegments(username, repository, "issues")
-                parameter("per_page", 1)
+        val response = throttle {
+            httpClient.get {
+                url {
+                    appendPathSegments("repos", username, repository, "issues")
+                    parameter("per_page", 1)
+                }
+                bulkIssueImportApiHeaders()
             }
-            requestHeaders()
-        }.let {
-            val resp = it.bodyAsText()
-            log.debug("Last issue number response: {}", resp)
-            val issues = jsonConfig.decodeFromString<List<IssueInfo>>(resp)
-            log.info("Last issue number in {}/{} is {}", username, repository, issues.firstOrNull()?.number)
-            return IssueNumber(issues.firstOrNull()?.number ?: 0)
         }
+        val responseText = response.bodyAsText()
+        log.debug("Last issue number response: {}", responseText)
+        val issues = jsonConfig.decodeFromString<List<IssueInfo>>(responseText)
+        log.info("Last issue number in {}/{} is {}", username, repository, issues.firstOrNull()?.number)
+        return issues.firstOrNull()?.number ?: IssueNumber(0)
     }
 
 }

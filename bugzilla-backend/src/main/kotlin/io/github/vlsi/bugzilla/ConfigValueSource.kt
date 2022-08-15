@@ -5,6 +5,7 @@ import com.github.ajalt.clikt.parameters.options.Option
 import com.github.ajalt.clikt.sources.ValueSource
 import com.typesafe.config.Config
 import com.typesafe.config.ConfigValueType
+import kotlin.time.toKotlinDuration
 
 /**
  * Pass values from application.conf to Click as if they were on the command line.
@@ -30,7 +31,12 @@ class ConfigValueSource(
                 when(value.valueType()) {
                     ConfigValueType.NULL -> emptyList()
                     ConfigValueType.LIST -> (value.unwrapped() as List<*>).map { ValueSource.Invocation.value(it) }
-                    else -> ValueSource.Invocation.just(value.unwrapped())
+                    else -> ValueSource.Invocation.just(
+                        when {
+                            "delay" in path -> config.getDuration(path).toKotlinDuration().toIsoString()
+                            else -> value.unwrapped()
+                        }
+                    )
                 }
             }
             else -> emptyList()

@@ -1,6 +1,9 @@
 package io.github.vlsi.bugzilla.commands
 
+import com.github.ajalt.clikt.core.BadParameterValue
 import com.github.ajalt.clikt.parameters.groups.OptionGroup
+import com.github.ajalt.clikt.parameters.options.convert
+import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.options.required
 import io.github.vlsi.bugzilla.dbexport.BugzillaLinkGenerator
@@ -10,6 +13,11 @@ import io.github.vlsi.bugzilla.github.GitHubApi
 import io.github.vlsi.bugzilla.github.IssueNumber
 import io.ktor.client.*
 import io.ktor.client.engine.cio.*
+import io.ktor.client.plugins.*
+import io.ktor.client.request.*
+import io.ktor.http.*
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 open class GitHubParametersGroup : OptionGroup(name = "GitHub parameters") {
     val token by option(
@@ -19,6 +27,9 @@ open class GitHubParametersGroup : OptionGroup(name = "GitHub parameters") {
     ).required()
     val organization by option("--github-organization").required()
     val issuesRepository by option("--github-issues-repository").required()
+    val delayBetweenApiCalls by option("--github-delay-between-api-calls")
+        .convert({ "DURATION" }) { Duration.parseIsoStringOrNull(it) ?: throw BadParameterValue("$it is not a valid delay") }
+        .default(1.seconds)
 
     fun issueLinkGenerator(
         bugzillaLinkGenerator: BugzillaLinkGenerator,
@@ -28,10 +39,19 @@ open class GitHubParametersGroup : OptionGroup(name = "GitHub parameters") {
 
     val gitHubApi by lazy {
         GitHubApi(
-            token = token,
+            delayBetweenApiCalls = delayBetweenApiCalls,
             httpClient = HttpClient(CIO) {
                 engine {
                     maxConnectionsCount = 1
+                }
+                defaultRequest {
+                    host = "api.github.com"
+                    url {
+                        protocol = URLProtocol.HTTPS
+                    }
+                    headers {
+                        append("Authorization", "token $token")
+                    }
                 }
             }
         )
