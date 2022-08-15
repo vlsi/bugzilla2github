@@ -15,6 +15,45 @@ class BugzillaExporter(
     private val attachmentLinkGenerator: AttachmentLinkGenerator,
     private val gitHubUserMapping: GitHubUserMapping,
 ) {
+    companion object {
+        val extToLanguage = mapOf(
+            "bat" to "batch",
+            "diff" to "diff",
+            "html" to "html",
+            "java" to "java",
+            "jmx" to "xml",
+            "js" to "js",
+            "json" to "json",
+            "patch" to "patch",
+            "perl" to "perl",
+            "php" to "php",
+            "pl" to "perl",
+            "properties" to "properties",
+            "py" to "python",
+            "sh" to "sh",
+            "xml" to "xml",
+            "xsl" to "xsl",
+        )
+        val imageExtensions = setOf(
+            "bmp",
+            "gif",
+            "jpeg",
+            "jpg",
+            "png",
+            "svg",
+            "tiff",
+        )
+        val binaryExtensions = setOf(
+            "7z",
+            "bz2",
+            "gz",
+            "jar",
+            "rar",
+            "tgz",
+            "zip",
+        )
+    }
+
     val statuses = transaction(db) {
         BugStatuses.selectAll()
             .map {
@@ -200,77 +239,63 @@ class BugzillaExporter(
         )
         val thedata = row[AttachData.thedata]
         val mimetype = row[Attachments.mimetype]
-        val knownTextType =
-            when {
-                mimetype == "text/plain" ||
-                mimetype == "text/1" ||
-                mimetype == "text/x-csrc" ||
-                mimetype == "text/x-matlab" ||
-                mimetype == "application/octet-stream"->
-                    when {
-                        fileName.endsWith(".patch") -> "patch"
-                        fileName.endsWith(".diff") -> "diff"
-                        fileName.endsWith(".java") -> "java"
-                        fileName.endsWith(".js") -> "js"
-                        fileName.endsWith(".json") -> "json"
-                        fileName.endsWith(".jmx") -> "xml"
-                        fileName.endsWith(".xml") -> "xml"
-                        fileName.endsWith(".php") -> "php"
-                        fileName.endsWith(".perl") -> "perl"
-                        fileName.endsWith(".sh") -> "sh"
-                        fileName.endsWith(".bat") -> "batch"
-                        fileName.endsWith(".properties") -> "properties"
-                        else -> ""
+        val extension = fileName.substringAfterLast('.')
+        val detectedLanguage =
+            "diff".takeIf { row[Attachments.ispatch] } ?:
+            when (extension) {
+                "jtl" ->
+                    if (thedata.bytes.sumOf {
+                            when(it) {
+                                ','.code.toByte() -> 1.toInt()
+                                '<'.code.toByte() -> -1
+                                else -> 0
+                            }
+                        } > 0) {
+                        "csv"
+                    } else {
+                        "xml"
                     }
-                else -> null
+                else ->
+                    extToLanguage[extension] ?:
+
+                    when (mimetype) {
+                        "application/x-extension-jmx" -> "xml"
+                        "application/x-shellscript" -> "sh"
+
+                        "application/xml",
+                        "application/html",
+                        "application/json",
+                        "application/php",
+                        "application/perl",
+                        "application/python" ->
+                            mimetype.removePrefix("application/")
+
+                        "text/plain",
+                        "text/1",
+                        "text/x-csrc",
+                        "text/x-matlab",
+                        "application/octet-stream" ->
+                            "" // Looks like a generic text
+
+                        else -> null
+                    }
             }
-        val knownImage =
-            fileName.endsWith(".png") ||
-            fileName.endsWith(".jpg") ||
-            fileName.endsWith(".jpeg") ||
-            fileName.endsWith(".gif") ||
-            fileName.endsWith(".bmp") ||
-            fileName.endsWith(".tiff") ||
-            fileName.endsWith(".svg");
+        val isImage = extension in imageExtensions
+        val isBinary = extension in binaryExtensions ||
+            thedata?.bytes?.contains(0) == true;
 
-        if (thedata != null && thedata.bytes.size < 10000 && !knownImage && (
-                    knownTextType != null ||
-                    mimetype.startsWith("text/") ||
-                            mimetype == "application/xml" ||
-                            mimetype == "application/json" ||
-                            mimetype == "application/php" ||
-                            mimetype == "application/perl" ||
-                            mimetype == "application/x-shellscript" ||
-                            mimetype == "application/x-extension-jmx" ||
-                            mimetype.endsWith("php") ||
-                            mimetype.endsWith("perl") ||
-                            mimetype.endsWith("javascript") ||
-                            mimetype.endsWith("jmx")
-
-                    )
-        ) {
-            res.append("\n\n")
-            res.append("Preview of ```$fileName```:\n")
-            res.append("\n```")
-            res.append(knownTextType ?:
-                when {
-                    mimetype == "application/x-shellscript" -> "sh"
-                    mimetype.endsWith("jmx") -> "xml"
-                    row[Attachments.ispatch] -> "diff"
-                    mimetype == "text/doc" -> ""
-                    mimetype.startsWith("text") ->
-                        mimetype.removePrefix("text/x-").removePrefix("text/")
-
-                    mimetype.startsWith("application/") ->
-                        mimetype.removePrefix("application/x-").removePrefix("application/")
-
-                    else -> ""
-                }
-            )
+        if (!isBinary && !isImage && thedata != null && thedata.bytes.size < 10000 && detectedLanguage != null) {
+            res.append("\n")
+            res.append("<details open><summary>")
+            res.append(fileName.escapeHTML())
+            res.append("</summary>")
+            res.append("\n\n````")
+            res.append(detectedLanguage)
             res.append("\n")
             res.append(thedata.bytes.toString(Charsets.UTF_8))
-            res.append("```")
-        } else if (knownImage || mimetype.startsWith("image/")) {
+            res.append("````")
+            res.append("\n\n</details>")
+        } else if (isImage || mimetype.startsWith("image/")) {
             res.append("\n\n")
             res.append("<img src='$attachmentLink' alt='${description.escapeHTML()}'>")
         } else if (mimetype.startsWith("video/")) {

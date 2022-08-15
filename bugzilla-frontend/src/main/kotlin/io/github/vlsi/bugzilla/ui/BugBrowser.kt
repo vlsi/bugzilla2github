@@ -25,7 +25,7 @@ import react.router.useNavigate
 import react.router.useParams
 
 val SampleBugs by VFC {
-    for (bug in listOf(42584, 66070, 65913, 65874, 65843, 65503, 65457)) {
+    for (bug in listOf(5088, 42584, 66070, 65913, 65874, 65843, 65503, 65457)) {
         Link {
             to = "/bugs/$bug"
             +"Bug $bug"
