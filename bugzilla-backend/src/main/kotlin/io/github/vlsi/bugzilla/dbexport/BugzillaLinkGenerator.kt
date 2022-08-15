@@ -8,4 +8,7 @@ class BugzillaLinkGenerator(
 ) {
     fun linkBug(bugId: BugId, title: String = "Bug $bugId") =
         Link(title, "$bugzillaUrl/show_bug.cgi?id=$bugId")
+
+    fun linkComment(bugId: BugId, commentIndex: Int, title: String) =
+        Link(title, "$bugzillaUrl/show_bug.cgi?id=$bugId#c$commentIndex")
 }

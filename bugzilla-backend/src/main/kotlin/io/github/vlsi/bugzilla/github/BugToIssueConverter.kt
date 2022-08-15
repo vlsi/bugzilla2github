@@ -2,19 +2,28 @@ package io.github.vlsi.bugzilla.github
 
 import RenderedComment
 import RenderedIssue
+import io.github.vlsi.bugzilla.dbexport.BugzillaLinkGenerator
 import io.github.vlsi.bugzilla.dto.Bug
+import io.github.vlsi.bugzilla.dto.BugId
 
 class BugToIssueConverter(
-    val milestones: Map<String, Milestone>
+    val milestones: Map<String, Milestone>,
+    val bugzillaLinkGenerator: BugzillaLinkGenerator,
 ) {
-    private val io.github.vlsi.bugzilla.dto.Comment.githubMarkdown: String
-        get() = (author.githubProfile?.let { "@$it" } ?: "**${author.realname}**") + ":\n$markdown"
+    private fun io.github.vlsi.bugzilla.dto.Comment.githubMarkdown(bugId: BugId): String =
+        (author.githubProfile?.let { "@$it" } ?: "**${author.realname}**") +
+                if (index == 0) {
+                    " (" + bugzillaLinkGenerator.linkBug(bugId, "Bug $bugId").markdown + ")"
+                } else {
+                    " (" + bugzillaLinkGenerator.linkComment(bugId, index, "migrated from Bugzilla").markdown + ")"
+                } +
+                ":\n$markdown"
 
     fun convert(bug: Bug): ImportIssueRequest =
         ImportIssueRequest(
             issue = Issue(
                 title = bug.description,
-                body = bug.markdown + "\n\n" + (bug.comments.firstOrNull()?.githubMarkdown ?: ""),
+                body = bug.markdown + "\n\n" + (bug.comments.firstOrNull()?.githubMarkdown(bug.bugId) ?: ""),
                 created_at = bug.creationDate,
                 closed_at = bug.closedWhen,
                 updated_at = bug.updatedWhen,
@@ -35,7 +44,7 @@ class BugToIssueConverter(
                 .map {
                     Comment(
                         created_at = it.created_when,
-                        body = it.githubMarkdown,
+                        body = it.githubMarkdown(bug.bugId),
                     )
                 }
         )

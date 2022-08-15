@@ -54,7 +54,10 @@ class ImportToGitHub : CliktCommand(name = "import-to-github", help = """
             attachmentLinkGenerator = gitHubParams.attachmentLinkGenerator,
             gitHubUserMapping = GitHubUserMapping(configuration),
         )
-        val converter = BugToIssueConverter(milestones)
+        val converter = BugToIssueConverter(
+            milestones = milestones,
+            bugzillaLinkGenerator = bugzillaParams.linkGenerator,
+        )
         val start = Clock.System.now()
         var imported = 0
         runBlocking {

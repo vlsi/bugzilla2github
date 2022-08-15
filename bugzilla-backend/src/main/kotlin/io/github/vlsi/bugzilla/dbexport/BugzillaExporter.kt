@@ -181,16 +181,17 @@ class BugzillaExporter(
 //                            slice(fields - AttachData.thedata + attachLength)
 //                        }
                         .orderBy(LongDescs.bug_when)
-                        .map {
-                            val commentType = it[LongDescs.type]
+                        .mapIndexed { index, row ->
+                            val commentType = row[LongDescs.type]
                             Comment(
-                                created_when = it[LongDescs.bug_when],
+                                index = index,
+                                created_when = row[LongDescs.bug_when],
                                 markdown =
                                 buildString {
                                     if (commentType == CommentTypes.ATTACHMENT_CREATED) {
-                                        append(addAttachment(bugId, it))
+                                        append(addAttachment(bugId, row))
                                     }
-                                    val thetext = it[LongDescs.thetext]
+                                    val thetext = row[LongDescs.thetext]
                                     if (thetext.isNotBlank()) {
                                         if (isNotEmpty()) {
                                             append("\n\n")
@@ -198,7 +199,7 @@ class BugzillaExporter(
                                         append(fixupMarkdown(gitHubLinkGenerator, thetext))
                                     }
                                     if (commentType == CommentTypes.DUPE_OF) {
-                                        it[LongDescs.extra_data]?.toInt()?.let { extraData ->
+                                        row[LongDescs.extra_data]?.toInt()?.let { extraData ->
                                             if (isNotEmpty()) {
                                                 append("\n\n")
                                             }
@@ -208,11 +209,11 @@ class BugzillaExporter(
                                     }
                                 },
                                 author = Profile(
-                                    login = it[Profiles.login_name],
-                                    realname = it[Profiles.realname].ifBlank {
-                                        it[Profiles.login_name].substringBefore('@')
+                                    login = row[Profiles.login_name],
+                                    realname = row[Profiles.realname].ifBlank {
+                                        row[Profiles.login_name].substringBefore('@')
                                     },
-                                    githubProfile = gitHubUserMapping.gitHubLoginOrNull(it[Profiles.login_name]),
+                                    githubProfile = gitHubUserMapping.gitHubLoginOrNull(row[Profiles.login_name]),
                                 )
                             )
                         }.let { list ->
