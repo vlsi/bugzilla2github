@@ -81,12 +81,11 @@ class BugzillaExporter(
                         .map { it[KeywordDefs.name] }
                         .sorted(),
                     os = it[Bugs.op_sys].let { OperatingSystem(it.value) },
+                    targetMilestone = it[Bugs.target_milestone].takeIf { it != "---" },
                     markdown = listOf(
                         "Migrated from" to gitHubLinkGenerator.bugzilla.linkBug(bugId).html,
-                        // "Migrated from" to fixupMarkdown(bugzillaUrl, "Bug ${bugId.value}"),
                         "Resolution" to it[Bugs.resolution].takeIf { it.isNotBlank() },
                         "Version" to it[Bugs.version]?.takeIf { it != "unspecified" && it.startsWith("Nightly") },
-                        "Target milestone" to it[Bugs.target_milestone].takeIf { it != "---" },
                         "Votes in Bugzilla" to it[Bugs.votes].takeIf { it > 0 }
                     ).filter { it.second != null && it.second.toString().isNotBlank() }
                         .joinToString(

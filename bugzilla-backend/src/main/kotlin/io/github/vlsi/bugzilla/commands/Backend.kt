@@ -106,7 +106,8 @@ fun Route.bugRoutes(
             if (dto == null) {
                 call.respondText("No such bug", status = HttpStatusCode.NotFound)
             } else {
-                val converter = BugToIssueConverter()
+                // TODO: add milestone map
+                val converter = BugToIssueConverter(mapOf())
                 val gfm = converter.convert(dto)
                 call.respond(
                     converter.render(

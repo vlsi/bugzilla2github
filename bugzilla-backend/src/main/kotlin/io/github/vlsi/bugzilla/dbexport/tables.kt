@@ -78,6 +78,13 @@ object Bugs : MediumIntIdTable("bugs", "bug_id") {
     val deadline = instantAsUtcDateTime("deadline").nullable()
 }
 
+object Milestones: MediumIntIdTable("milestones", "id") {
+    val value = varchar("value", 64).default("---")
+    val product_id = reference("product_id", Products)
+    val sortKey = short("sortkey")
+    val isactive = bool01("isactive").default(true)
+}
+
 object FieldDefs: MediumIntIdTable("fielddefs", "id") {
     val name = varchar("name", 64)
     val description = varchar("description", 255)

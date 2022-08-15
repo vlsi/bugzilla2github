@@ -4,7 +4,9 @@ import RenderedComment
 import RenderedIssue
 import io.github.vlsi.bugzilla.dto.Bug
 
-class BugToIssueConverter {
+class BugToIssueConverter(
+    val milestones: Map<String, Milestone>
+) {
     private val io.github.vlsi.bugzilla.dto.Comment.githubMarkdown: String
         get() = (author.githubProfile?.let { "@$it" } ?: "**${author.realname}**") + ":\n$markdown"
 
@@ -17,6 +19,7 @@ class BugToIssueConverter {
                 closed_at = bug.closedWhen,
                 updated_at = bug.updatedWhen,
                 closed = !bug.status.isOpen,
+                milestone = bug.targetMilestone?.let { milestones[it]?.number },
                 labels = buildList {
                     add("priority: ${bug.priority.value}")
                     add("severity: ${bug.severity.value}")

@@ -25,7 +25,7 @@ data class Issue(
     val closed_at: Instant? = null,
     val updated_at: Instant? = null,
     val assignee: String? = null,
-    val milestone: Int? = null,
+    val milestone: MilestoneNumber? = null,
     val closed: Boolean? = null,
     val labels: List<String> = listOf(),
     val body: String,

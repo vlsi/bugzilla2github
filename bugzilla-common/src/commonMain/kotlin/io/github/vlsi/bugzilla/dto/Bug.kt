@@ -11,6 +11,7 @@ class Bug(
     val priority: BugPriority,
     val severity: BugSeverity,
     val status: BugStatus,
+    val targetMilestone: String?,
     val creationDate: Instant?,
     val closedWhen: Instant?,
     val updatedWhen: Instant?,

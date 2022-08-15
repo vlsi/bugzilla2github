@@ -18,7 +18,7 @@ class ImportIssueRequestTest {
                 issue = Issue(
                     title = "issue title",
                     body = "issue body",
-                    milestone = 1,
+                    milestone = MilestoneNumber(1),
                     closed = false,
                 ),
                 comments = listOf(

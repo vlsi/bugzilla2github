@@ -39,6 +39,14 @@ class ImportToGitHub : CliktCommand(name = "import-to-github", help = """
     ).int()
 
     override fun run() {
+        val milestones = runBlocking {
+            prepareMilestones(
+                gitHubParams,
+                dbParams,
+                dryRun,
+            )
+        }
+
         val exporter = BugzillaExporter(
             dbParams.connect,
             dbParams.bugLinks,
@@ -46,7 +54,7 @@ class ImportToGitHub : CliktCommand(name = "import-to-github", help = """
             attachmentLinkGenerator = gitHubParams.attachmentLinkGenerator,
             gitHubUserMapping = GitHubUserMapping(configuration),
         )
-        val converter = BugToIssueConverter()
+        val converter = BugToIssueConverter(milestones)
         val start = Clock.System.now()
         var imported = 0
         runBlocking {

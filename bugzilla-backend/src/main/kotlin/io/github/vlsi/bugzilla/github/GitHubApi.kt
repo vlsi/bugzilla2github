@@ -148,4 +148,57 @@ class GitHubApi(
         return issues.firstOrNull()?.number ?: IssueNumber(0)
     }
 
+    suspend fun listMilestones(
+        username: String,
+        repository: String,
+        state: MilestoneListState = MilestoneListState.open
+    ): List<Milestone> {
+        log.debug("Retrieving the list of milestones for {}/{}", username, repository)
+        val response = throttle {
+            httpClient.get {
+                url {
+                    path("repos", username, repository, "milestones")
+                    parameter("state", state.name)
+                }
+                acceptGitHubJson()
+            }
+        }
+        if (response.status == HttpStatusCode.NotFound) {
+            return listOf()
+        }
+        val responseText = response.bodyAsText()
+        log.debug("List milestones response: {}", responseText)
+        val milestones = try {
+            jsonConfig.decodeFromString<List<Milestone>>(responseText)
+        } catch (e: SerializationException) {
+            throw IllegalStateException("Can't get the list of milestones for $username/$repository: $responseText")
+        }
+        return milestones
+    }
+
+    suspend fun createMilestone(
+        username: String, repository: String,
+        request: MilestoneCreateRequest
+    ): Milestone {
+        val str = jsonConfig.encodeToString(request)
+        log.debug("Creating milestone {}/{}: {}", username, repository, str)
+
+        val response = throttle {
+            httpClient.post {
+                url {
+                    path("repos", username, repository, "milestones")
+                }
+                acceptGitHubJson()
+                setBody(str)
+            }
+        }
+        val responseText = response.bodyAsText()
+
+        val milestone = try {
+            jsonConfig.decodeFromString<Milestone>(responseText)
+        } catch (e: SerializationException) {
+            throw IllegalStateException("Can't create milestone $str for $username/$repository: $responseText")
+        }
+        return milestone
+    }
 }
