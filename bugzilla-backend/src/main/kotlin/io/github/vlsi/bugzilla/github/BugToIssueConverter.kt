@@ -30,11 +30,22 @@ class BugToIssueConverter(
                 closed = !bug.status.isOpen,
                 milestone = bug.targetMilestone?.let { milestones[it]?.number },
                 labels = buildList {
-                    add("priority: ${bug.priority.value}")
-                    add("severity: ${bug.severity.value}")
-                    add("os: ${bug.os.value}")
-                    add("status: ${bug.status.value}")
-                    add("bugzilla")
+                    add("priority: ${bug.priority}")
+                    add("severity: ${bug.severity}")
+                    bug.os?.let {
+                        add("os: $it")
+                    }
+                    if (bug.status.value == "NEEDINFO") {
+                        add("need-info")
+                    }
+                    bug.resolution?.let {
+                        when(it) {
+                            "FIXED", "CLOSED" -> {
+                                // ignore, the resolutions are mapped to the issue status
+                            }
+                            else -> add("resolution: $it")
+                        }
+                    }
                     addAll(bug.keywords.map { "keyword: $it" })
                 }
             ),

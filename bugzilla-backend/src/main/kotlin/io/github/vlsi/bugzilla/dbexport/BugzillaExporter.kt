@@ -119,11 +119,11 @@ class BugzillaExporter(
                         .distinct()
                         .map { it[KeywordDefs.name] }
                         .sorted(),
-                    os = it[Bugs.op_sys].let { OperatingSystem(it.value) },
+                    os = it[Bugs.op_sys]?.takeIf { it.isNotBlank() }?.let { OperatingSystem(it) },
                     targetMilestone = it[Bugs.target_milestone].takeIf { it != "---" },
+                    resolution = it[Bugs.resolution].takeIf { it.isNotBlank() },
                     markdown = listOf(
                         "Migrated from" to gitHubLinkGenerator.bugzilla.linkBug(bugId).html,
-                        "Resolution" to it[Bugs.resolution].takeIf { it.isNotBlank() },
                         "Version" to it[Bugs.version]?.takeIf { it != "unspecified" && it.startsWith("Nightly") },
                         "Votes in Bugzilla" to it[Bugs.votes].takeIf { it > 0 }
                     ).filter { it.second != null && it.second.toString().isNotBlank() }

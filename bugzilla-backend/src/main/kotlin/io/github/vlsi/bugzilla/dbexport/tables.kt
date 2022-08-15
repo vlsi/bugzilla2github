@@ -57,7 +57,7 @@ object Bugs : MediumIntIdTable("bugs", "bug_id") {
     val creation_ts = instantAsUtcDateTime("creation_ts").nullable()
     val delta_ts = instantAsUtcDateTime("delta_ts")
     val short_desc = varchar("short_desc", 255)
-    val op_sys = reference("op_sys", OperatingSystems)
+    val op_sys = varchar("op_sys", 64).nullable()
     val priority = reference("priority", Priorities)
     val rep_platform = varchar("rep_platform", 20).nullable()
     val reporter = integer("reporter").nullable()
