@@ -10,7 +10,7 @@ class FixMarkdownTest {
     @Test
     internal fun `bugzilla id`() {
         assertEquals(
-            "#42",
+            "https://github.com/test-org/repo/issues/42",
             fixupMarkdown(
                 GitHubIssueLinkGenerator(
                     BugzillaLinkGenerator("https://bz/"),
@@ -28,7 +28,7 @@ class FixMarkdownTest {
     @Test
     internal fun `bugzilla url`() {
         assertEquals(
-            "See #42, #43",
+            "See https://github.com/test-org/repo/issues/42, https://github.com/test-org/repo/issues/43",
             fixupMarkdown(
                 GitHubIssueLinkGenerator(
                     BugzillaLinkGenerator("https://bz/", listOf("https://issues")),

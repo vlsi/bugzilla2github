@@ -18,7 +18,7 @@ class GitHubIssueLinkGenerator(
     fun replaceBugzillaLinks(text: String) =
         text.replace(bugLinkRegex) {
             val bugId = BugId(it.groupValues[1].toInt())
-            bugToIssue[bugId]?.let { "#$it" } ?: it.value
+            bugToIssue[bugId]?.let { htmlLink(it) } ?: it.value
         }
 
     fun issueLink(bugId: BugId, markup: Markup) : String {
@@ -29,8 +29,12 @@ class GitHubIssueLinkGenerator(
             }
         }
         return when(markup) {
-            Markup.MARKDOWN -> "#$issueId"
-            Markup.HTML -> "https://github.com/$organization/$repository/issues/$issueId"
+            // Use the full issue link always, so it is easier to distinguish links if we need to update comments in the future
+            Markup.MARKDOWN,
+            Markup.HTML -> htmlLink(issueId)
         }
     }
+
+    private fun htmlLink(issueId: IssueNumber) =
+        "https://github.com/$organization/$repository/issues/$issueId"
 }
