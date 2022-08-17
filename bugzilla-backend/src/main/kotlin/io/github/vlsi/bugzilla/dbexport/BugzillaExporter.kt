@@ -122,25 +122,22 @@ class BugzillaExporter(
                     os = it[Bugs.op_sys]?.takeIf { it.isNotBlank() }?.let { OperatingSystem(it) },
                     targetMilestone = it[Bugs.target_milestone].takeIf { it != "---" },
                     resolution = it[Bugs.resolution].takeIf { it.isNotBlank() },
-                    markdown = listOf(
-                        "Migrated from" to gitHubLinkGenerator.bugzilla.linkBug(bugId).html,
-                        "Version" to it[Bugs.version]?.takeIf { it != "unspecified" && it.startsWith("Nightly") },
-                        "Votes in Bugzilla" to it[Bugs.votes].takeIf { it > 0 }
-                    ).filter { it.second != null && it.second.toString().isNotBlank() }
-                        .joinToString(
-                            separator = "\n",
-                            prefix = "<table>\n",
-                            postfix = "</table>\n\n"
-                        ) { "<tr><th>${it.first}</th><td>${it.second}</td></tr>" } +
-                            listOf(
-                                "Duplicates" to bugLinks.duplicates[bugId]?.issueList(),
-                                "Duplicated by" to bugLinks.duplicatedBy[bugId]?.issueList(),
-                                "Depends on" to bugLinks.blockedBy[bugId]?.issueList(),
-                                "Blocks" to bugLinks.blocks[bugId]?.issueList(),
-                            ).filter { it.second != null && it.second.toString().isNotBlank() }
-                                .joinToString("\n\n") {
-                                    "${it.first}:\n${it.second}"
-                                },
+                    header = null,
+                    footer = listOfNotNull(
+                        it[Bugs.version]?.takeIf { it != "unspecified" && it.startsWith("Nightly") }
+                            ?.let { "Version: $it" },
+                        it[Bugs.votes].takeIf { it > 0 }
+                            ?.let { "Votes in Bugzilla: $it" },
+                        listOf(
+                            "Duplicates" to bugLinks.duplicates[bugId]?.issueList(),
+                            "Duplicated by" to bugLinks.duplicatedBy[bugId]?.issueList(),
+                            "Depends on" to bugLinks.blockedBy[bugId]?.issueList(),
+                            "Blocks" to bugLinks.blocks[bugId]?.issueList(),
+                        ).filter { it.second != null && it.second.toString().isNotBlank() }
+                            .joinToString("\n\n") {
+                                "${it.first}:\n${it.second}"
+                            }
+                    ).filter { it.isNotBlank() }.joinToString("\n\n"),
                     comments = (LongDescs innerJoin Profiles)
                         .join(
                             Attachments,
@@ -156,8 +153,14 @@ class BugzillaExporter(
                             onColumn = Attachments.id,
                             otherColumn = AttachData.id
                         ) {
-                            Attachments.mimetype notLike "video/%" and (
+                            CustomLongFunction("length", AttachData.thedata) lessEq 20000L and (
+                                    Attachments.mimetype notLike "video/%"
+                                    ) and (
                                     Attachments.mimetype notLike "audio/%"
+                                    ) and (
+                                    Attachments.mimetype notLike "image/%"
+                                    ) and (
+                                    Attachments.mimetype notLike "%7z%"
                                     ) and (
                                     Attachments.mimetype notLike "%zip%"
                                     ) and (
@@ -168,12 +171,6 @@ class BugzillaExporter(
                                     Attachments.mimetype notLike "%compressed%"
                                     ) and (
                                     Attachments.mimetype notLike "%archive%"
-                                    ) and (
-                                    Attachments.mimetype notLike "%binary%"
-                                    ) and (
-                                    Attachments.mimetype notLike "%octet%"
-                                    ) and (
-                                    Attachments.mimetype notLike "application/vnd%"
                                     )
                         }
                         .select { LongDescs.bug_id eq bugId.value }
@@ -188,15 +185,15 @@ class BugzillaExporter(
                                 created_when = row[LongDescs.bug_when],
                                 markdown =
                                 buildString {
-                                    if (commentType == CommentTypes.ATTACHMENT_CREATED) {
-                                        append(addAttachment(bugId, row))
-                                    }
                                     val thetext = row[LongDescs.thetext]
                                     if (thetext.isNotBlank()) {
+                                        append(fixupMarkdown(gitHubLinkGenerator, thetext))
+                                    }
+                                    if (commentType == CommentTypes.ATTACHMENT_CREATED) {
                                         if (isNotEmpty()) {
                                             append("\n\n")
                                         }
-                                        append(fixupMarkdown(gitHubLinkGenerator, thetext))
+                                        append(addAttachment(bugId, row))
                                     }
                                     if (commentType == CommentTypes.DUPE_OF) {
                                         row[LongDescs.extra_data]?.toInt()?.let { extraData ->
@@ -224,9 +221,9 @@ class BugzillaExporter(
         }
 
     private fun addAttachment(bugId: BugId, row: ResultRow): String? {
+        val attachId = row.getOrNull(Attachments.id)?.value?.let { AttachId(it) } ?: return null
         val fileName = row[Attachments.filename]
         val res = StringBuilder()
-        val attachId = row[Attachments.id]?.value?.let { AttachId(it) } ?: return null
 
         val attachmentLink = attachmentLinkGenerator.linkFor(
             bugId,
@@ -238,14 +235,16 @@ class BugzillaExporter(
         res.append(
             "Created attachment ${Link(fileName, attachmentLink).markdown}: $description"
         )
-        val thedata = row[AttachData.thedata]
+        val thedata = row.getOrNull(AttachData.thedata)
         val mimetype = row[Attachments.mimetype]
         val extension = fileName.substringAfterLast('.')
         val detectedLanguage =
             "diff".takeIf { row[Attachments.ispatch] } ?:
             when (extension) {
                 "jtl" ->
-                    if (thedata.bytes.sumOf {
+                    if (thedata == null) {
+                        ""
+                    } else if (thedata.bytes.sumOf {
                             when(it) {
                                 ','.code.toByte() -> 1.toInt()
                                 '<'.code.toByte() -> -1

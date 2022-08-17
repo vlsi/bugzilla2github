@@ -6,7 +6,8 @@ import kotlinx.serialization.Serializable
 @Serializable
 class Bug(
     val bugId: BugId,
-    val markdown: String,
+    val header: String?,
+    val footer: String?,
     val description: String,
     val priority: BugPriority,
     val severity: BugSeverity,

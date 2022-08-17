@@ -23,7 +23,8 @@ class BugToIssueConverter(
         ImportIssueRequest(
             issue = Issue(
                 title = bug.description,
-                body = bug.markdown + "\n\n" + (bug.comments.firstOrNull()?.githubMarkdown(bug.bugId) ?: ""),
+                body = listOfNotNull(bug.header, bug.comments.firstOrNull()?.githubMarkdown(bug.bugId), bug.footer)
+                    .joinToString("\n\n"),
                 created_at = bug.creationDate,
                 closed_at = bug.closedWhen,
                 updated_at = bug.updatedWhen,
