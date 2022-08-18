@@ -124,10 +124,14 @@ class BugzillaExporter(
                     resolution = it[Bugs.resolution].takeIf { it.isNotBlank() },
                     header = null,
                     footer = listOfNotNull(
-                        it[Bugs.version]?.takeIf { it != "unspecified" && it.startsWith("Nightly") }
+                        it.getOrNull(Bugs.version)?.takeIf { it != "unspecified" && it.startsWith("Nightly") }
                             ?.let { "Version: $it" },
                         it[Bugs.votes].takeIf { it > 0 }
                             ?.let { "Votes in Bugzilla: $it" },
+                        it[Bugs.bug_severity].value.takeIf { it != "enhancement" && it != "regression" }
+                            ?.let { "Severity: $it" },
+                        it[Bugs.op_sys]
+                            ?.let { "OS: $it" },
                         listOf(
                             "Duplicates" to bugLinks.duplicates[bugId]?.issueList(),
                             "Duplicated by" to bugLinks.duplicatedBy[bugId]?.issueList(),
@@ -135,9 +139,9 @@ class BugzillaExporter(
                             "Blocks" to bugLinks.blocks[bugId]?.issueList(),
                         ).filter { it.second != null && it.second.toString().isNotBlank() }
                             .joinToString("\n\n") {
-                                "${it.first}:\n${it.second}"
+                                "\n${it.first}:\n${it.second}"
                             }
-                    ).filter { it.isNotBlank() }.joinToString("\n\n"),
+                    ).filter { it.isNotBlank() }.joinToString("\n"),
                     comments = (LongDescs innerJoin Profiles)
                         .join(
                             Attachments,

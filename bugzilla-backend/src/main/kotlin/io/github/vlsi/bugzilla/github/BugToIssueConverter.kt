@@ -31,10 +31,20 @@ class BugToIssueConverter(
                 closed = !bug.status.isOpen,
                 milestone = bug.targetMilestone?.let { milestones[it]?.number },
                 labels = buildList {
-                    add("priority: ${bug.priority}")
-                    add("severity: ${bug.severity}")
+                    add("${bug.priority}")
+                    if (bug.severity.value == "enhancement" || bug.severity.value == "regression") {
+                        add(bug.severity.value)
+                    }
                     bug.os?.let {
-                        add("os: $it")
+                        val os = when {
+                            it.value.equals("All", ignoreCase = true) -> "All"
+                            it.value.startsWith("Win", ignoreCase = true) -> "Windows"
+                            it.value.startsWith("Mac", ignoreCase = true) -> "macOS"
+                            it.value.startsWith("Linux", ignoreCase = true) -> "Linux"
+                            else -> "other"
+                        }
+
+                        add("os: $os")
                     }
                     if (bug.status.value == "NEEDINFO") {
                         add("need-info")
