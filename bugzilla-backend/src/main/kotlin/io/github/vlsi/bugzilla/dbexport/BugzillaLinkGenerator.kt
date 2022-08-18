@@ -7,8 +7,8 @@ class BugzillaLinkGenerator(
     val alternativeUrls: List<String> = listOf(),
 ) {
     fun linkBug(bugId: BugId, title: String = "Bug $bugId") =
-        Link(title, "$bugzillaUrl/show_bug.cgi?id=$bugId")
+        Link(title, "$bugzillaUrl/show_bug.cgi?id=$bugId&redirect=false")
 
     fun linkComment(bugId: BugId, commentIndex: Int, title: String) =
-        Link(title, "$bugzillaUrl/show_bug.cgi?id=$bugId#c$commentIndex")
+        Link(title, "$bugzillaUrl/show_bug.cgi?id=$bugId&redirect=false#c$commentIndex")
 }
