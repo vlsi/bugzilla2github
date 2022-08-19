@@ -47,7 +47,7 @@ class BugToIssueConverter(
                         add("os: $os")
                     }
                     if (bug.status.value == "NEEDINFO") {
-                        add("need-info")
+                        add("need info")
                     }
                     bug.resolution?.let {
                         when(it) {
