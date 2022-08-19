@@ -54,7 +54,15 @@ class BugToIssueConverter(
                             "FIXED", "CLOSED" -> {
                                 // ignore, the resolutions are mapped to the issue status
                             }
-                            else -> add("resolution: $it")
+                            "INVALID", "WORKSFORME" -> add("invalid")
+                            "DUPLICATE" -> add("duplicate")
+                            "WONTFIX" -> add("wontfix")
+                            "LATER", "REMIND", "MOVED", "INFORMATIONPROVIDED" -> {
+                                // ignore those statuses
+                            }
+                            else -> {
+                                // ignore the rest if any
+                            }
                         }
                     }
                     addAll(bug.keywords.map { "keyword: $it" })

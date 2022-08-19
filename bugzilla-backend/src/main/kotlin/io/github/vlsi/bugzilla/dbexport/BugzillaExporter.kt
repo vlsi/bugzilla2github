@@ -132,6 +132,9 @@ class BugzillaExporter(
                             ?.let { "Severity: $it" },
                         it[Bugs.op_sys]
                             ?.let { "OS: $it" },
+                        it[Bugs.resolution].takeIf { it.isNotBlank() && it != "FIXED" && it != "CLOSED" &&
+                                it != "INVALID" && it != "DUPLICATE" && it != "WONTFIX" }
+                            ?.let { "Resolution: $it" },
                         listOf(
                             "Duplicates" to bugLinks.duplicates[bugId]?.issueList(),
                             "Duplicated by" to bugLinks.duplicatedBy[bugId]?.issueList(),
