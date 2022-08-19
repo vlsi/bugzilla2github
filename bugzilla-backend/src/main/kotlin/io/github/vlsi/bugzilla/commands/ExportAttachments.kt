@@ -6,13 +6,14 @@ import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.options.required
 import com.github.ajalt.clikt.parameters.types.file
 import io.github.vlsi.bugzilla.dbexport.*
+import io.github.vlsi.bugzilla.dto.AttachId
 import io.github.vlsi.bugzilla.dto.BugId
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.slf4j.LoggerFactory
 
-fun attachmentDir(bugId: BugId): String =
-    "${bugId.value.rem(100).toString().padStart(2, '0')}/${bugId.value}"
+fun attachmentDir(bugId: BugId, attachId: AttachId): String =
+    "${bugId.value.rem(100).toString().padStart(2, '0')}/$bugId/$attachId"
 
 class ExportAttachments : CliktCommand(help = """
     Export attachments from Bugzilla database to a local folder
@@ -46,15 +47,17 @@ class ExportAttachments : CliktCommand(help = """
                 .selectAll()
 
             attachments.forEach {
+                val bugId = BugId(it[Attachments.bug_id].value)
+                val attachId = AttachId(it[Attachments.id].value)
                 val parent =
-                    dataFolder.resolve(attachmentDir(BugId(it[Attachments.bug_id].value))).apply {
+                    dataFolder.resolve(attachmentDir(bugId, attachId)).apply {
                         mkdirs()
                     }
-                val file = parent.resolve("${it[Attachments.id]}-${it[Attachments.filename]}")
+                val file = parent.resolve(it[Attachments.filename])
                 val bytes = it[AttachData.thedata].bytes
                 log.info(
                     "Writing attachment for bug {}, {} bytes to {}",
-                    it[Attachments.bug_id],
+                    bugId,
                     bytes.size,
                     file
                 )

@@ -18,13 +18,13 @@ class GitHubPagesAttachmentLinkGenerator(
             protocol = URLProtocol.HTTPS
             host = "$organization.github.io"
             appendPathSegments(repository)
-            appendEncodedPathSegments(attachmentDir(bugId))
+            appendEncodedPathSegments(attachmentDir(bugId, attachId))
             val encodedFileName = if (needEncodePercent) {
                 // ktor fails to escape patterns that look like "already escaped" %XX
                 filename.replace(semiEscaped, "%25$1")
             } else {
                 filename
             }
-            appendPathSegments("${attachId.value}-$encodedFileName")
+            appendPathSegments(encodedFileName)
         }
 }
