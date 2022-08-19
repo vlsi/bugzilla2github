@@ -125,6 +125,7 @@ class BugzillaExporter(
                     header = null,
                     footer = listOfNotNull(
                         it.getOrNull(Bugs.version)?.takeIf { it != "unspecified" && it.startsWith("Nightly") }
+                            ?.removeSuffix(" (Please specify date)")
                             ?.let { "Version: $it" },
                         it[Bugs.votes].takeIf { it > 0 }
                             ?.let { "Votes in Bugzilla: $it" },
