@@ -14,7 +14,7 @@ class GitHubPagesAttachmentLinkGeneratorTest {
             "repo"
         )
         assertEquals(
-            "https://org.github.io/repo/42/45642/123-test%2520file.png",
+            "https://org.github.io/repo/42/45642/123/test%2520file.png",
             gen.linkFor(BugId(45642), AttachId(123), "test%20file.png")
         )
     }
